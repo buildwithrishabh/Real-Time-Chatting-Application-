@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Environment & Secrets
+.env
+*.env
+**/.env
+**/.env.*
+
+# Logs
+logs/
+**/logs/
+*.log
+
+# Runtime data & Uploads
+pids/
+*.pid
+uploads/
+temp/
+tmp/
+
+# Testing & Coverage
+coverage/
+.nyc_output/
+
+# Build & Cache
+dist/
+build/
+.eslintcache
+.prettiercache
+
+# IDE & Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,50 @@
+const { redis } = require("../redis/client");
+const { AppError } = require("../common/appError");
+const logger = require("../config/logger");
+
+const apiRateLimiter = (limit = 100, windowSec = 60) => {
+  return async (req, res, next) => {
+    const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+    const userId = req.user ? req.user.id : null;
+
+    const identifier = userId ? `user:${userId}` : `ip:${ip}`;
+    const key = `rate_limit:${identifier}:${req.baseUrl}${req.path}`;
+
+    const now = Date.now();
+    const windowStart = now - windowSec * 1000;
+
+    try {
+      const multi = redis.multi();
+
+      // Remove requests older than the sliding window start
+      multi.zremrangebyscore(key, 0, windowStart);
+
+      // Add current request
+      multi.zadd(key, now, now.toString());
+
+      // Count total requests within the current window
+      multi.zcard(key);
+
+      // Set TTL on the set key to prevent orphan records
+      multi.expire(key, windowSec + 1);
+
+      const result = await multi.exec();
+      const requestCount = result[2][1];
+
+      if (requestCount > limit) {
+        logger.warn(`Rate limit reached for key: ${key}`);
+        return next(
+          new AppError("Too many requests, please try again later.", 429),
+        );
+      }
+
+      next();
+    } catch (err) {
+      logger.error(`Rate Limiter error: ${err.message}`);
+      next();
+    }
+  };
+};
+
+
+module.exports = apiRateLimiter;

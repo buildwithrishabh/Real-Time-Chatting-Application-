@@ -1,0 +1,54 @@
+const dotenv = require("dotenv");
+const { z } = require("zod");
+
+// Load environment variables
+dotenv.config();
+
+const envSchema = z.object({
+  PORT: z
+    .string()
+    .transform((val) => parseInt(val, 10))
+    .default("5000"),
+  NODE_ENV: z
+    .enum(["development", "production", "test"])
+    .default("development"),
+
+  MONGODB_URI: z.string().url("MONGODB_URI must be a valid connection URL"),
+
+  REDIS_HOST: z.string().default("localhost"),
+  REDIS_PORT: z
+    .string()
+    .transform((val) => parseInt(val, 10))
+    .default("6379"),
+  REDIS_PASSWORD: z.string().optional().default(""),
+
+  JWT_ACCESS_SECRET: z
+    .string()
+    .min(8, "JWT Access Secret must be at least 8 characters long"),
+  JWT_REFRESH_SECRET: z
+    .string()
+    .min(8, "JWT Refresh Secret must be at least 8 characters long"),
+  COOKIE_SECRET: z
+    .string()
+    .min(8, "Cookie Secret must be at least 8 characters long"),
+
+  CLOUDINARY_CLOUD_NAME: z.string(),
+  CLOUDINARY_API_KEY: z.string(),
+  CLOUDINARY_API_SECRET: z.string(),
+
+  SMTP_HOST: z.string(),
+  SMTP_PORT: z.string().transform((val) => parseInt(val, 10)),
+  SMTP_USER: z.string().optional().default(""),
+  SMTP_PASS: z.string().optional().default(""),
+  SMTP_FROM: z.string().email().default("noreply@chatapp.com"),
+});
+
+const envValidation = envSchema.safeParse(process.env);
+
+if (!envValidation.success) {
+  console.error("❌ Invalid environment configuration:");
+  console.error(JSON.stringify(envValidation.error.format(), null, 2));
+  process.exit(1);
+}
+
+module.exports = envValidation.data;
