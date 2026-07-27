@@ -1,5 +1,9 @@
 const Conversation = require("../../model/Conversation");
 const Participant = require("../../model/Participant");
+const File = require("../../model/File")
+const Notification = require("../../model/Notification")
+const Message = require("../../model/Message");
+
 
 const createConversation = async (type, name, ownerId = null) => {
   return Conversation.create({ type, name, ownerId });
@@ -80,9 +84,22 @@ const updateParticipantRole = async (conversationId, userId, role) => {
 };
 
 const deleteConversation = async (id) => {
-  await Conversation.deleteOne({ _id: id });
+  // 1. Delete all messages in conversation
+  await Message.deleteMany({ conversationId: id });
+  
+  // 2. Delete all file records
+  await File.deleteMany({ conversationId: id });
+  
+  // 3. Delete all participants
   await Participant.deleteMany({ conversationId: id });
+  
+  // 4. Delete notifications
+  await Notification.deleteMany({ chatId: id });
+  
+  // 5. Delete conversation document
+  await Conversation.deleteOne({ _id: id });
 };
+
 
 module.exports = {
   createConversation,

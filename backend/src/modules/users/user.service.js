@@ -56,9 +56,9 @@ const updateProfile = async (userId, updateFields) => {
   return updateUser;
 };
 
-const searchUsers = async (query) => {
+const searchUsers = async (query, currentUserId = null) => {
   if (!query || query.trim().length === 0) return [];
-  return userRepository.findUsersByQuery(query.trim());
+  return userRepository.findUsersByQuery(query.trim(), currentUserId);
 };
 
 module.exports = {

@@ -3,6 +3,7 @@ const messageRepository = require("./message.repository");
 const chatRepository = require("../chats/chat.repository");
 const { AppError, StatusCodes } = require("../../common/appError");
 const User = require("../../model/User");
+const blockRepository = require("../users/block.repository");
 
 const sendMessage = async (senderId, payload) => {
   const { conversationId, content, type, fileId, replyToMessageId, mentions } =
@@ -20,6 +21,20 @@ const sendMessage = async (senderId, payload) => {
     );
   }
 
+  const participants = await chatRepository.getParticipants(conversationId);
+  for (const p of participants) {
+    const otherUserId = p.userId?._id || p.userId;
+    if (otherUserId && otherUserId.toString() !== senderId.toString()) {
+      const isBlocked = await blockRepository.isBlocked(otherUserId, senderId);
+      if (isBlocked) {
+        throw new AppError(
+          "Cannot send message because you are blocked by a participant in this conversation",
+          StatusCodes.FORBIDDEN,
+        );
+      }
+    }
+  }
+
   const message = await messageRepository.saveMessage({
     conversationId,
     senderId,
@@ -30,10 +45,7 @@ const sendMessage = async (senderId, payload) => {
     mentions: mentions || [],
   });
 
-  const [sender, participants] = await Promise.all([
-    User.findById(senderId).select("username displayName"),
-    chatRepository.getParticipants(conversationId),
-  ]);
+  const sender = await User.findById(senderId).select("username displayName");
 
   const senderName = sender?.displayName || sender?.username || "Someone";
   const mentionedUserIds = new Set((mentions || []).map((id) => id.toString()));

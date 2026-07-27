@@ -1,5 +1,5 @@
 const notificationService = require("./notification.service");
-const { StatusCodes } = require("http-status-codes");
+const { StatusCodes } = require("../../common/appError");
 
 const getNotifications = async (req, res, next) => {
   try {

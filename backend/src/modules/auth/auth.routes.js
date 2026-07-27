@@ -20,8 +20,8 @@ const loginSchema = z.object({
   body: z.object({
     email: z.string().email(),
     password: z.string(),
-    deviceId: z.string(),
-    deviceName: z.string().optional(),
+    deviceId: z.string().optional().default("web-browser"),
+    deviceName: z.string().optional().default("Web Browser"),
   }),
 });
 

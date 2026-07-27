@@ -1,8 +1,16 @@
 const { notifyUser } = require("../notifications/notification.service");
 const chatRepository = require("./chat.repository");
 const { AppError, StatusCodes } = require("../../common/appError");
+const blockRepository = require("../users/block.repository");
 
 const createChat = async (creatorId, { type, name, participantIds }) => {
+  if (participantIds.includes(creatorId.toString())) {
+    throw new AppError(
+      "You cannot create a conversation with yourself",
+      StatusCodes.BAD_REQUEST,
+    );
+  }
+
   if (type === "private") {
     if (participantIds.length !== 1) {
       throw new AppError(
@@ -12,6 +20,17 @@ const createChat = async (creatorId, { type, name, participantIds }) => {
     }
 
     const recipentId = participantIds[0];
+
+    const isBlocked = await blockRepository.isEitherBlocked(
+      creatorId,
+      recipentId,
+    );
+    if (isBlocked) {
+      throw new AppError(
+        "Cannot create chat with this user due to block setting",
+        StatusCodes.FORBIDDEN,
+      );
+    }
 
     const existingChat = await chatRepository.findPrivateConversation(
       creatorId,
@@ -53,6 +72,12 @@ const createChat = async (creatorId, { type, name, participantIds }) => {
 };
 
 const addParticipant = async (adminId, conversationId, targetUserId) => {
+  if (adminId.toString() === targetUserId.toString()) {
+    throw new AppError(
+      "You cannot add yourself to the conversation",
+      StatusCodes.BAD_REQUEST,
+    );
+  }
   const conversation =
     await chatRepository.findConversationById(conversationId);
   if (!conversation) {
@@ -155,7 +180,7 @@ const removeUser = async (adminId, conversationId, targetUserId) => {
   // Prevent removing the group owner unless deleting group
   if (
     conversation.ownerId &&
-    conversation.ownerId.toString() === targetUserId.toString() &&
+    conversation.ownerId?.toString() === targetUserId.toString() &&
     conversation.type === "group"
   ) {
     throw new AppError(

@@ -1,9 +1,13 @@
+const dns = require("dns");
+dns.setServers(["8.8.8.8", "1.1.1.1"]);
+
 const http = require("http");
 const app = require("./app");
 const env = require("./config/env");
 const logger = require("./config/logger");
 const { connectDB } = require("./config/db");
 const { initSocket } = require("./socket");
+const { startWorkers } = require("./queues/worker");
 
 const server = http.createServer(app);
 
@@ -18,7 +22,10 @@ const startServer = async () => {
     // 1. Establish Database connection first
     await connectDB();
 
-    // 2. Start HTTP Server
+    // 2. Start Background Queue Workers (Email & Push Notifications)
+    startWorkers();
+
+    // 3. Start HTTP Server
     server.listen(PORT, () => {
       logger.info(
         `🚀 Stateless Server running in [${env.NODE_ENV}] mode on port ${PORT}`,

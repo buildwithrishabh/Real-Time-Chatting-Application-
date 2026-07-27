@@ -3,6 +3,7 @@ const userController = require("./user.controller");
 const validate = require("../../middleware/validate");
 const authGuard = require("../../middleware/authGuard");
 const { z } = require("zod");
+const blockController = require("./block.controller");
 
 const router = express.Router();
 
@@ -45,6 +46,14 @@ router.patch(
   userController.updateProfile,
 );
 router.get("/search", userController.searchUsers);
+
+// Block User Routes (Must be defined BEFORE /:id to prevent route collision)
+router.get("/blocked", blockController.listBlocked);
+router.post("/:userId/block", blockController.block);
+router.delete("/:userId/block", blockController.unblock);
+router.delete("/:userId/unblock", blockController.unblock);
+
+// Generic /:id route must remain at the end
 router.get("/:id", userController.getUserById);
 
 module.exports = router;

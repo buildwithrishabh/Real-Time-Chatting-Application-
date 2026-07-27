@@ -1,5 +1,6 @@
 const logger = require("../../config/logger");
 const messageService = require("../../modules/messages/message.service");
+const chatRepository = require("../../modules/chats/chat.repository");
 
 module.exports = (io, socket) => {
   socket.on("room:join", async ({ conversationId }) => {
@@ -29,6 +30,20 @@ module.exports = (io, socket) => {
     }
 
     try {
+      const isParticipant = await chatRepository.findParticipant(
+        conversationId,
+        socket.user.id,
+      );
+
+      if (!isParticipant) {
+        if (typeof callback === "function") {
+          callback({
+            success: false,
+            error: "You are not a participants in this conversation",
+          });
+        }
+        return;
+      }
       // 1. Save message to MongoDB and send notifications via service
       const message = await messageService.sendMessage(socket.user.id, payload);
 

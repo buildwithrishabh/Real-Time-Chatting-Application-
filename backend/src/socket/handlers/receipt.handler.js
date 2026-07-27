@@ -1,4 +1,6 @@
 const logger = require("../../config/logger");
+const Participant = require("../../model/Participant");
+const Message = require("../../model/Message");
 
 module.exports = (io, socket) => {
   const userId = socket.user.id;
@@ -7,6 +9,17 @@ module.exports = (io, socket) => {
     if (!conversationId || !messageId) return;
 
     try {
+      const participant = await Participant.findOneAndUpdate(
+        { conversationId, userId },
+        {
+          lastReadMessageId: messageId,
+          unreadCount: 0,
+        },
+        {
+          new: true,
+        },
+      );
+      
       socket.to(`chat:room:${conversationId}`).emit(`receipt:updated`, {
         conversationId,
         userId,
@@ -14,6 +27,7 @@ module.exports = (io, socket) => {
         status: "read",
         timestamp: new Date(),
       });
+
       logger.debug(
         `Receipt: Message [${messageId}] marked READ by user [${socket.user.username}]`,
       );

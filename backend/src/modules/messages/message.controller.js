@@ -1,3 +1,4 @@
+const Participant = require("../../model/Participant");
 const messageService = require("./message.service");
 
 const send = async (req, res, next) => {
@@ -19,6 +20,16 @@ const list = async (req, res, next) => {
       cursor,
       limit ? parseInt(limit, 10) : undefined,
     );
+
+    if (messages.length > 0) {
+      const latestMessageId = messages[0]._id;
+      await Participant.findOneAndUpdate(
+        { conversationId, userId: req.user.id },
+        {
+          lastReadMessageId: latestMessageId,
+        },
+      );
+    }
 
     const nextCursor =
       messages.length > 0 ? messages[messages.length - 1].createdAt : null;
@@ -66,29 +77,31 @@ const unreact = async (req, res, next) => {
   }
 };
 
-const edit = async (req , res , next) => {
+const edit = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { content } = req.body;
-    const updatedMessage = await messageService.editMessage(id, req.user.id, content);
+    const updatedMessage = await messageService.editMessage(
+      id,
+      req.user.id,
+      content,
+    );
     res.status(200).json({ success: true, data: updatedMessage });
   } catch (err) {
-    next(err)
+    next(err);
   }
-}
+};
 
-const deleteMsg = async (req , res , next) => {
+const deleteMsg = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { type } = req.body;
-    const result = await messageService.deleteMessage(
-      req.user.id,id, type
-    );
-    res.status(200).json({ success: true, data: result })
-  } catch(err) {
-    next(err)
+    const result = await messageService.deleteMessage(req.user.id, id, type);
+    res.status(200).json({ success: true, data: result });
+  } catch (err) {
+    next(err);
   }
-}
+};
 
 module.exports = {
   send,
@@ -96,5 +109,5 @@ module.exports = {
   react,
   unreact,
   edit,
-  deleteMsg
+  deleteMsg,
 };

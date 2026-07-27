@@ -4,6 +4,12 @@ const logger = require("../config/logger");
 
 const apiRateLimiter = (limit = 100, windowSec = 60) => {
   return async (req, res, next) => {
+    
+    // Skip rate limiting in development mode to prevent local testing blocks
+    if (process.env.NODE_ENV === "development") {
+      return next();
+    }
+
     const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
     const userId = req.user ? req.user.id : null;
 

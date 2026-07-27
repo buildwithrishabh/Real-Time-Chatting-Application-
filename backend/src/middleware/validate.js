@@ -8,10 +8,11 @@ const validate = (schema) => (req, res, next) => {
   });
 
   if (!result.success) {
-    const errorDetails = result.error.errors
+    const issues = result.error.issues || result.error.errors || [];
+    const errorDetails = issues
       .map((err) => `${err.path.join(".")}: ${err.message}`)
       .join(", ");
-    return next(new AppError(errorDetails, StatusCodes.BAD_REQUEST));
+    return next(new AppError(errorDetails || "Validation failed", StatusCodes.BAD_REQUEST));
   }
 
   req.validated = result.data;
