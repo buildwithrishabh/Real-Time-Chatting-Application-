@@ -25,7 +25,6 @@ const register = async ({ username, email, password }) => {
   await authRepository.setVerificationToken(user._id, hashedToken, expiresAt);
 
   // send verification email via background queue
-
   await sendEmailJob("otp_verification", email, { otp: token });
 
   return {
@@ -83,9 +82,20 @@ const login = async ({
     expiresAt,
   });
 
+  const userPayload = {
+    id: user._id,
+    username: user.username,
+    email: user.email,
+    displayName: user.displayName || user.username,
+    avatarUrl: user.avatarUrl || "",
+    isEmailVerified: user.isEmailVerified,
+    isProfileComplete: user.isProfileComplete,
+  };
+
   return {
     accessToken,
     refreshToken,
+    user: userPayload,
     isProfileComplete: user.isProfileComplete,
   };
 };
@@ -135,7 +145,22 @@ const rotateTokens = async (token) => {
     expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
   });
 
-  return { accessToken: newAccessToken, refreshToken: newRefreshToken };
+  const userPayload = {
+    id: user._id,
+    username: user.username,
+    email: user.email,
+    displayName: user.displayName || user.username,
+    avatarUrl: user.avatarUrl || "",
+    isEmailVerified: user.isEmailVerified,
+    isProfileComplete: user.isProfileComplete,
+  };
+
+  return {
+    accessToken: newAccessToken,
+    refreshToken: newRefreshToken,
+    user: userPayload,
+    isProfileComplete: user.isProfileComplete,
+  };
 };
 
 const logout = async (userId, deviceId) => {
@@ -173,7 +198,6 @@ const resendVerificationEmail = async (email) => {
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
   await authRepository.setVerificationToken(user._id, hashedToken, expiresAt);
 
-
   await sendEmailJob("otp_verification", email, { otp: token });
 
   return {
@@ -186,7 +210,6 @@ const resendVerificationEmail = async (email) => {
 const forgotPassword = async (email) => {
   const user = await authRepository.findUserByEmail(email);
   if (!user) {
-    // Return generic message to prevent account enumeration attacks
     return {
       message:
         "If an account with that email exists, a password reset link has been sent.",
@@ -194,12 +217,11 @@ const forgotPassword = async (email) => {
   }
 
   const { token, hashedToken } = generateToken();
-  const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
   await authRepository.savePasswordResetToken(user._id, hashedToken, expiresAt);
 
-
   await sendEmailJob("password_reset", email, { token });
-  
+
   return {
     message:
       "If an account with that email exists, a password reset link has been sent.",
@@ -222,12 +244,10 @@ const resetPassword = async ({ token: rawToken, newPassword }) => {
     );
   }
 
-  // Hash new password and save
   const salt = await bcrypt.genSalt(10);
   const newPasswordHash = await bcrypt.hash(newPassword, salt);
   await authRepository.updateUserPassword(user._id, newPasswordHash);
 
-  // Security Hardening: Revoke all active sessions across all devices
   await authRepository.revokeAllUserSessions(user._id);
 
   return {

@@ -9,7 +9,7 @@ export const messagesApi = {
   },
 
   send: async (conversationId: string, payload: { content?: string; fileId?: string; replyToMessageId?: string }) => {
-    const res = await client.post<ApiSuccess<Message>>(`/messages/${conversationId}`, payload);
+    const res = await client.post<ApiSuccess<Message>>(`/messages/`, { ...payload, conversationId });
     return res.data.data;
   },
 
@@ -18,8 +18,8 @@ export const messagesApi = {
     return res.data.data;
   },
 
-  delete: async (messageId: string, mode: 'for_me' | 'for_everyone' = 'for_everyone') => {
-    const res = await client.delete<ApiSuccess<Message>>(`/messages/${messageId}`, { data: { mode } });
+  delete: async (messageId: string, mode: 'me' | 'everyone' = 'everyone') => {
+    const res = await client.delete<ApiSuccess<Message>>(`/messages/${messageId}`, { data: { type: mode } });
     return res.data.data;
   },
 

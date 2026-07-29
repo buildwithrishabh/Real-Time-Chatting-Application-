@@ -1,158 +1,108 @@
 import { useState } from 'react';
-import { SlidersHorizontal } from 'lucide-react';
+import { SlidersHorizontal, MessageSquareOff, WifiOff } from 'lucide-react';
 import { SearchBar } from './SearchBar';
 import { ConversationItem } from './ConversationItem';
 import type { Conversation } from '../../types/chat';
 import { useChatStore } from '../../store/chat.store';
+import { useSocketStore } from '../../store/socket.store';
+import { useUIStore } from '../../store/ui.store';
+import { cn } from '../../lib/utils';
 
 interface ChatSidebarProps {
   conversations: Conversation[];
   isLoading?: boolean;
 }
 
-const MOCK_CONVERSATIONS: Partial<Conversation>[] = [
-  {
-    _id: 'conv-1',
-    type: 'private',
-    name: 'Priya Verma',
-    avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
-    updatedAt: new Date().toISOString(),
-    participants: [
-      {
-        _id: 'p-1',
-        userId: { _id: 'u-1', displayName: 'Priya Verma', avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', privacySettings: { onlineStatus: 'public', lastSeen: 'public' } } as any,
-        conversationId: 'conv-1',
-        role: 'member',
-        muted: false,
-        archived: false,
-        unreadCount: 2,
-        joinedAt: '',
-      },
-    ],
-    lastMessage: {
-      _id: 'm-1',
-      conversationId: 'conv-1',
-      senderId: 'u-1',
-      content: 'Hey! How are you doing?',
-      type: 'text',
-      isPinned: false,
-      isEdited: false,
-      isDeletedForEveryone: false,
-      deletedByUsers: [],
-      mentions: [],
-      starredBy: [],
-      reactions: {},
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-  },
-  {
-    _id: 'conv-2',
-    type: 'private',
-    name: 'Rohan Mehta',
-    avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
-    updatedAt: new Date(Date.now() - 3600000).toISOString(),
-    participants: [
-      {
-        _id: 'p-2',
-        userId: { _id: 'u-2', displayName: 'Rohan Mehta', avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150', privacySettings: { onlineStatus: 'public', lastSeen: 'public' } } as any,
-        conversationId: 'conv-2',
-        role: 'member',
-        muted: false,
-        archived: false,
-        unreadCount: 1,
-        joinedAt: '',
-      },
-    ],
-    lastMessage: {
-      _id: 'm-2',
-      conversationId: 'conv-2',
-      senderId: 'u-2',
-      content: "Let's catch up later",
-      type: 'text',
-      isPinned: false,
-      isEdited: false,
-      isDeletedForEveryone: false,
-      deletedByUsers: [],
-      mentions: [],
-      starredBy: [],
-      reactions: {},
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-  },
-  {
-    _id: 'conv-3',
-    type: 'group',
-    name: 'College Group',
-    avatarUrl: '',
-    updatedAt: new Date(Date.now() - 86400000).toISOString(),
-    participants: [
-      {
-        _id: 'p-3',
-        userId: 'u-me',
-        conversationId: 'conv-3',
-        role: 'member',
-        muted: false,
-        archived: false,
-        unreadCount: 3,
-        joinedAt: '',
-      },
-    ],
-    lastMessage: {
-      _id: 'm-3',
-      conversationId: 'conv-3',
-      senderId: 'u-3',
-      content: 'Sneha: Notes are uploaded',
-      type: 'text',
-      isPinned: false,
-      isEdited: false,
-      isDeletedForEveryone: false,
-      deletedByUsers: [],
-      mentions: [],
-      starredBy: [],
-      reactions: {},
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-  },
-];
+type FilterTab = 'all' | 'unread' | 'groups';
 
 export function ChatSidebar({ conversations, isLoading }: ChatSidebarProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [filterTab, setFilterTab] = useState<FilterTab>('all');
   const { activeConversationId, setActiveConversation } = useChatStore();
+  const isConnected = useSocketStore((s) => s.isConnected);
+  const { setNewChatOpen } = useUIStore();
 
-  const displayList =
-    conversations && conversations.length > 0
-      ? conversations
-      : (MOCK_CONVERSATIONS as Conversation[]);
-
-  const filteredConversations = displayList.filter((conv) => {
+  const filteredConversations = conversations.filter((conv) => {
     const title = conv.name || '';
-    return title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = title.toLowerCase().includes(searchQuery.toLowerCase());
+    if (!matchesSearch) return false;
+    if (filterTab === 'unread') {
+      const myParticipant = conv.participants?.find((p) => {
+        const pId = typeof p.userId === 'string' ? p.userId : p.userId._id;
+        return pId === useChatStore.getState().activeConversationId || true;
+      });
+      return (myParticipant?.unreadCount || 0) > 0;
+    }
+    if (filterTab === 'groups') return conv.type === 'group';
+    return true;
   });
 
   return (
-    <div className="w-80 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0F172A] flex flex-col h-screen p-4 select-none">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
-          Chats
-        </h2>
-        <button className="p-2 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
-          <SlidersHorizontal className="w-5 h-5" />
-        </button>
-      </div>
+    <div className="w-80 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0F172A] flex flex-col h-screen select-none">
+      {/* Connection Status */}
+      {!isConnected && (
+        <div className="px-4 py-2 bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-900/60">
+          <div className="flex items-center gap-2 text-xs font-semibold text-amber-700 dark:text-amber-400">
+            <WifiOff className="w-3.5 h-3.5" />
+            <span>Connecting to server...</span>
+            <span className="ml-auto w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+          </div>
+        </div>
+      )}
 
-      <div className="mb-4">
+      <div className="p-4 pb-2">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
+            Chats
+          </h2>
+          <button
+            onClick={() => setNewChatOpen(true)}
+            className="p-2 text-slate-500 hover:text-violet-600 dark:text-slate-400 dark:hover:text-violet-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+          >
+            <SlidersHorizontal className="w-5 h-5" />
+          </button>
+        </div>
+
         <SearchBar value={searchQuery} onChange={setSearchQuery} />
+
+        {searchQuery ? (
+          <div className="flex items-center justify-between mt-2">
+            <span className="text-xs text-slate-400">
+              {filteredConversations.length} result{filteredConversations.length !== 1 ? 's' : ''}
+            </span>
+            <button
+              onClick={() => setSearchQuery('')}
+              className="text-xs text-violet-600 dark:text-violet-400 font-semibold hover:underline"
+            >
+              Clear
+            </button>
+          </div>
+        ) : (
+          <div className="flex gap-1 mt-3">
+            {(['all', 'unread', 'groups'] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setFilterTab(tab)}
+                className={cn(
+                  'px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors capitalize',
+                  filterTab === tab
+                    ? 'bg-violet-100 dark:bg-violet-900/50 text-violet-700 dark:text-violet-300'
+                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                )}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      <div className="flex-1 overflow-y-auto space-y-1 pr-1">
+      <div className="flex-1 overflow-y-auto space-y-1 px-4 pb-4">
         {isLoading ? (
-          <div className="space-y-3 p-2">
-            {[1, 2, 3, 4].map((n) => (
+          <div className="space-y-3 pt-2">
+            {[1, 2, 3, 4, 5].map((n) => (
               <div key={n} className="flex items-center gap-3 animate-pulse">
-                <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-800" />
+                <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-800 flex-shrink-0" />
                 <div className="flex-1 space-y-2">
                   <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-2/3" />
                   <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-5/6" />
@@ -161,8 +111,28 @@ export function ChatSidebar({ conversations, isLoading }: ChatSidebarProps) {
             ))}
           </div>
         ) : filteredConversations.length === 0 ? (
-          <div className="text-center py-12 text-slate-400 text-sm">
-            No conversations found
+          <div className="flex flex-col items-center justify-center h-full text-center py-12">
+            {searchQuery ? (
+              <>
+                <MessageSquareOff className="w-10 h-10 text-slate-300 dark:text-slate-600 mb-3" />
+                <p className="text-sm text-slate-400 mb-1">No conversations found</p>
+                <p className="text-xs text-slate-400">Try a different search term</p>
+              </>
+            ) : (
+              <>
+                <MessageSquareOff className="w-10 h-10 text-slate-300 dark:text-slate-600 mb-3" />
+                <p className="text-sm text-slate-400 mb-1">No conversations yet</p>
+                <p className="text-xs text-slate-400 mb-4">
+                  Start a new chat to begin messaging
+                </p>
+                <button
+                  onClick={() => setNewChatOpen(true)}
+                  className="px-4 py-2 gradient-btn text-white text-sm font-bold rounded-xl hover:scale-105 active:scale-95 transition-all"
+                >
+                  Start a Chat
+                </button>
+              </>
+            )}
           </div>
         ) : (
           filteredConversations.map((conv) => (

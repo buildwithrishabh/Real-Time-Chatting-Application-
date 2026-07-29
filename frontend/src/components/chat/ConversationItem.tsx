@@ -1,3 +1,4 @@
+import { usePresenceStore } from '../../store/presence.store';
 import type { Conversation } from '../../types/chat';
 import { useAuthStore } from '../../store/auth.store';
 import { formatConversationDate } from '../../lib/format';
@@ -11,6 +12,7 @@ interface ConversationItemProps {
 
 export function ConversationItem({ conversation, isActive, onClick }: ConversationItemProps) {
   const currentUserId = useAuthStore((s) => s.user?._id);
+  const onlineUsers = usePresenceStore((s) => s.onlineUsers);
 
   const otherParticipant = conversation.participants?.find((p) => {
     const pId = typeof p.userId === 'string' ? p.userId : p.userId._id;
@@ -18,16 +20,17 @@ export function ConversationItem({ conversation, isActive, onClick }: Conversati
   });
 
   const otherUserObj = typeof otherParticipant?.userId === 'object' ? otherParticipant.userId : null;
+  const otherUserId = typeof otherParticipant?.userId === 'string' ? otherParticipant.userId : otherUserObj?._id;
 
   const title =
     conversation.type === 'group'
       ? conversation.name || 'Group Chat'
-      : otherUserObj?.displayName || conversation.name || 'User';
+      : otherUserObj?.displayName || otherUserObj?.username || conversation.name || 'User';
 
   const avatarUrl =
     conversation.type === 'group' ? conversation.avatarUrl : otherUserObj?.avatarUrl || conversation.avatarUrl;
 
-  const isOnline = otherUserObj?.privacySettings?.onlineStatus !== 'private';
+  const isOnline = otherUserId ? onlineUsers[otherUserId] === 'online' : false;
 
   const myParticipant = conversation.participants?.find((p) => {
     const pId = typeof p.userId === 'string' ? p.userId : p.userId._id;
@@ -39,7 +42,17 @@ export function ConversationItem({ conversation, isActive, onClick }: Conversati
   const lastMessageText = conversation.lastMessage
     ? conversation.lastMessage.isDeletedForEveryone
       ? 'This message was deleted'
-      : conversation.lastMessage.content || (conversation.lastMessage.fileId ? 'Attachment' : '')
+      : conversation.lastMessage.content
+        ? conversation.lastMessage.content
+        : conversation.lastMessage.fileId
+          ? conversation.lastMessage.type === 'image'
+            ? 'Photo'
+            : conversation.lastMessage.type === 'video'
+              ? 'Video'
+              : conversation.lastMessage.type === 'audio'
+                ? 'Voice message'
+                : 'Attachment'
+          : ''
     : 'No messages yet';
 
   const timeDisplay = conversation.updatedAt ? formatConversationDate(conversation.updatedAt) : '';
@@ -66,8 +79,15 @@ export function ConversationItem({ conversation, isActive, onClick }: Conversati
             {title.slice(0, 2).toUpperCase()}
           </div>
         )}
-        {conversation.type !== 'group' && isOnline && (
-          <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full animate-pulse" />
+        {conversation.type !== 'group' && (
+          <span
+            className={cn(
+              'absolute bottom-0 right-0 w-3.5 h-3.5 border-2 border-white dark:border-slate-900 rounded-full transition-colors duration-300',
+              isOnline
+                ? 'bg-emerald-500'
+                : 'bg-slate-400 dark:bg-slate-600'
+            )}
+          />
         )}
       </div>
 
@@ -88,7 +108,7 @@ export function ConversationItem({ conversation, isActive, onClick }: Conversati
           </p>
           {unreadCount > 0 && (
             <span className="flex-shrink-0 min-w-[20px] h-[20px] px-1.5 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-[11px] font-bold flex items-center justify-center shadow-md shadow-violet-600/30">
-              {unreadCount}
+              {unreadCount > 99 ? '99+' : unreadCount}
             </span>
           )}
         </div>

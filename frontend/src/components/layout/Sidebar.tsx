@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '../../store/auth.store';
 import { useUIStore } from '../../store/ui.store';
+import { useSocketStore } from '../../store/socket.store';
 import type { NavTab } from '../../store/ui.store';
 import { useAuth } from '../../hooks/useAuth';
 import { cn } from '../../lib/utils';
@@ -22,6 +23,7 @@ export function Sidebar() {
   const user = useAuthStore((s) => s.user);
   const { activeTab, setActiveTab, darkMode, toggleDarkMode, setNewChatOpen, setProfileModalOpen } = useUIStore();
   const { logout, isLoggingOut } = useAuth();
+  const isConnected = useSocketStore((s) => s.isConnected);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
   const navItems: { id: NavTab; label: string; icon: React.ElementType }[] = [
@@ -38,7 +40,7 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="w-64 border-r border-slate-200/80 dark:border-slate-800 bg-white/90 dark:bg-[#111827] flex flex-col justify-between h-screen p-4 transition-colors select-none">
+    <aside className="w-64 border-r border-slate-200/80 dark:border-slate-800 bg-white/90 dark:bg-[#111827] flex flex-col justify-between h-screen p-4 transition-colors select-none flex-shrink-0">
       <div className="flex flex-col gap-5">
         {/* Brand Header */}
         <div className="flex items-center gap-3 px-2 py-1">
@@ -56,31 +58,36 @@ export function Sidebar() {
             onClick={() => setProfileDropdownOpen((prev) => !prev)}
             className="w-full flex items-center justify-between p-2.5 rounded-2xl hover:bg-slate-100/80 dark:hover:bg-slate-800/60 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700/60"
           >
-            <div className="flex items-center gap-3">
-              <div className="relative">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="relative flex-shrink-0">
                 {user?.avatarUrl ? (
                   <img
                     src={user.avatarUrl}
-                    alt={user.displayName}
+                    alt={user.displayName || user.username}
                     className="w-10 h-10 rounded-full object-cover border-2 border-violet-500/30"
                   />
                 ) : (
                   <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-violet-600 to-indigo-600 text-white font-bold flex items-center justify-center text-sm shadow-md">
-                    {user?.displayName ? user.displayName.slice(0, 2).toUpperCase() : 'ME'}
+                    {(user?.displayName || user?.username || 'ME').slice(0, 2).toUpperCase()}
                   </div>
                 )}
-                <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white dark:border-[#111827] animate-pulse" />
+                <span
+                  className={cn(
+                    'absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-[#111827] transition-colors duration-300',
+                    isConnected ? 'bg-emerald-500' : 'bg-slate-400'
+                  )}
+                />
               </div>
-              <div className="flex flex-col text-left">
-                <span className="text-sm font-bold text-slate-900 dark:text-white truncate max-w-[110px]">
-                  {user?.displayName || 'Arjun Sharma'}
+              <div className="flex flex-col text-left min-w-0">
+                <span className="text-sm font-bold text-slate-900 dark:text-white truncate">
+                  {user?.displayName || user?.username || 'User'}
                 </span>
-                <span className="text-xs text-emerald-500 font-semibold flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" /> Online
+                <span className="text-xs text-slate-400 dark:text-slate-500 font-semibold truncate">
+                  @{user?.username || 'username'}
                 </span>
               </div>
             </div>
-            <ChevronDown className="w-4 h-4 text-slate-400" />
+            <ChevronDown className="w-4 h-4 text-slate-400 flex-shrink-0" />
           </button>
 
           {profileDropdownOpen && (
@@ -140,7 +147,7 @@ export function Sidebar() {
         </nav>
       </div>
 
-      {/* Bottom Settings & Logout */}
+      {/* Bottom Settings */}
       <div className="flex flex-col gap-2 pt-4 border-t border-slate-200/80 dark:border-slate-800">
         <div className="flex items-center justify-between px-3.5 py-2 text-slate-600 dark:text-slate-400 text-sm font-semibold">
           <div className="flex items-center gap-3">
@@ -168,7 +175,7 @@ export function Sidebar() {
           disabled={isLoggingOut}
           className="flex items-center gap-3.5 px-4 py-2.5 text-slate-600 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-2xl text-sm font-semibold transition-all"
         >
-          <LogOut className="w-5 h-5 text-slate-400 group-hover:text-rose-500" />
+          <LogOut className="w-5 h-5 text-slate-400" />
           <span>Log out</span>
         </button>
       </div>

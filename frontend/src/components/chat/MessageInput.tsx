@@ -1,6 +1,7 @@
-import React, { useState, useRef } from 'react';
-import { Smile, Paperclip, Mic, Send, X } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Smile, Paperclip, Mic, Send, X, Image as ImageIcon, FileText } from 'lucide-react';
 import { useFileUpload } from '../../hooks/useFileUpload';
+import { cn } from '../../lib/utils';
 
 interface MessageInputProps {
   onSendMessage: (content: string, fileId?: string) => void;
@@ -8,6 +9,8 @@ interface MessageInputProps {
   onTypingStop?: () => void;
   conversationId: string | null;
 }
+
+const EMOJI_LIST = ['😀', '😂', '❤️', '👍', '🔥', '🎉', '😢', '😮', '😍', '🙏', '💀', '🤣', '💯', '✨', '👋', '🚀', '💪', '🤔'];
 
 export function MessageInput({
   onSendMessage,
@@ -17,8 +20,21 @@ export function MessageInput({
 }: MessageInputProps) {
   const [text, setText] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [showEmoji, setShowEmoji] = useState(false);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const emojiRef = useRef<HTMLDivElement>(null);
   const { upload, isUploading, progress } = useFileUpload();
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (emojiRef.current && !emojiRef.current.contains(e.target as Node)) {
+        setShowEmoji(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setText(e.target.value);
@@ -31,8 +47,23 @@ export function MessageInput({
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0]);
+      const file = e.target.files[0];
+      setSelectedFile(file);
+
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (ev) => setFilePreview(ev.target?.result as string);
+        reader.readAsDataURL(file);
+      } else {
+        setFilePreview(null);
+      }
     }
+  };
+
+  const handleRemoveFile = () => {
+    setSelectedFile(null);
+    setFilePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -45,16 +76,27 @@ export function MessageInput({
       try {
         const fileMeta = await upload(selectedFile, conversationId);
         fileId = fileMeta._id;
-      } catch (err) {
-        console.error('File upload failed', err);
+      } catch {
         return;
       }
     }
 
     onSendMessage(text.trim(), fileId);
     setText('');
-    setSelectedFile(null);
+    handleRemoveFile();
     onTypingStop?.();
+  };
+
+  const handleEmojiSelect = (emoji: string) => {
+    setText((prev) => prev + emoji);
+    setShowEmoji(false);
+    onTypingStart?.();
+  };
+
+  const getFileIcon = () => {
+    if (!selectedFile) return null;
+    if (selectedFile.type.startsWith('image/')) return <ImageIcon className="w-5 h-5 text-violet-500" />;
+    return <FileText className="w-5 h-5 text-violet-500" />;
   };
 
   return (
@@ -63,15 +105,33 @@ export function MessageInput({
       className="p-4 bg-white dark:bg-[#0B0F19] border-t border-slate-200/80 dark:border-slate-800/80"
     >
       {selectedFile && (
-        <div className="mb-2 flex items-center justify-between p-2.5 px-4 bg-violet-50 dark:bg-violet-950/60 border border-violet-200 dark:border-violet-800 rounded-xl text-xs text-violet-700 dark:text-violet-300 font-semibold">
-          <span className="truncate max-w-[250px] font-bold">{selectedFile.name}</span>
+        <div className="mb-2 flex items-center gap-3 p-2.5 px-4 bg-violet-50 dark:bg-violet-950/60 border border-violet-200 dark:border-violet-800 rounded-xl">
+          {filePreview ? (
+            <img
+              src={filePreview}
+              alt="Preview"
+              className="w-10 h-10 rounded-lg object-cover border border-violet-300 dark:border-violet-700"
+            />
+          ) : (
+            <div className="w-10 h-10 rounded-lg bg-violet-100 dark:bg-violet-900 flex items-center justify-center">
+              {getFileIcon()}
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-bold text-violet-700 dark:text-violet-300 truncate">
+              {selectedFile.name}
+            </p>
+            <p className="text-[10px] text-violet-500 dark:text-violet-400">
+              {isUploading ? `Uploading... ${progress}%` : 'Ready to send'}
+            </p>
+          </div>
           {isUploading ? (
-            <span className="font-extrabold">{progress}%</span>
+            <div className="w-5 h-5 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
           ) : (
             <button
               type="button"
-              onClick={() => setSelectedFile(null)}
-              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              onClick={handleRemoveFile}
+              className="p-1 text-violet-400 hover:text-violet-600 dark:hover:text-violet-200 rounded-full hover:bg-violet-200/50 dark:hover:bg-violet-800/50 transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -79,13 +139,39 @@ export function MessageInput({
         </div>
       )}
 
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          className="p-2.5 text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-        >
-          <Smile className="w-5 h-5" />
-        </button>
+      <div className="flex items-center gap-3 relative">
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setShowEmoji((prev) => !prev)}
+            className={cn(
+              'p-2.5 rounded-full transition-colors',
+              showEmoji
+                ? 'text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-900/50'
+                : 'text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+            )}
+          >
+            <Smile className="w-5 h-5" />
+          </button>
+
+          {showEmoji && (
+            <div
+              ref={emojiRef}
+              className="absolute bottom-full mb-2 left-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl p-3 grid grid-cols-6 gap-1 z-50 animate-scale-in"
+            >
+              {EMOJI_LIST.map((emoji) => (
+                <button
+                  key={emoji}
+                  type="button"
+                  onClick={() => handleEmojiSelect(emoji)}
+                  className="text-lg hover:scale-125 transition-transform p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         <input
           type="text"
@@ -100,6 +186,7 @@ export function MessageInput({
           type="file"
           className="hidden"
           onChange={handleFileChange}
+          accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.zip"
         />
 
         <button
@@ -120,7 +207,7 @@ export function MessageInput({
         <button
           type="submit"
           disabled={(!text.trim() && !selectedFile) || isUploading}
-          className="w-11 h-11 rounded-2xl gradient-btn text-white flex items-center justify-center shadow-lg shadow-violet-600/30 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 transition-all duration-200"
+          className="w-11 h-11 rounded-2xl gradient-btn text-white flex items-center justify-center shadow-lg shadow-violet-600/30 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 transition-all duration-200 flex-shrink-0"
         >
           <Send className="w-5 h-5 stroke-[2.2] translate-x-[1px]" />
         </button>
