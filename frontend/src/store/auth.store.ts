@@ -1,0 +1,62 @@
+import { create } from 'zustand';
+import type { User } from '../types/user';
+
+function generateDeviceId(): string {
+  const fingerprint = [
+    navigator.userAgent,
+    navigator.language,
+    screen.width,
+    screen.height,
+    navigator.hardwareConcurrency || 4,
+  ].join('|');
+
+  let hash = 0;
+  for (let i = 0; i < fingerprint.length; i++) {
+    const char = fingerprint.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash |= 0;
+  }
+
+  return `${Math.abs(hash).toString(36)}-${crypto.randomUUID().slice(0, 8)}`;
+}
+
+interface AuthState {
+  accessToken: string | null;
+  user: User | null;
+  deviceId: string;
+  isAuthenticated: boolean;
+  isProfileComplete: boolean;
+
+  setAuth: (accessToken: string, user: User, isProfileComplete?: boolean) => void;
+  setProfileComplete: (complete: boolean) => void;
+  setUser: (user: User) => void;
+  clearAuth: () => void;
+}
+
+export const useAuthStore = create<AuthState>((set) => ({
+  accessToken: null,
+  user: null,
+  deviceId: generateDeviceId(),
+  isAuthenticated: false,
+  isProfileComplete: false,
+
+  setAuth: (accessToken, user, isProfileComplete) =>
+    set({
+      accessToken,
+      user,
+      isAuthenticated: true,
+      isProfileComplete: isProfileComplete ?? user.isProfileComplete ?? true,
+    }),
+
+  setProfileComplete: (isProfileComplete) => set({ isProfileComplete }),
+
+  setUser: (user) => set({ user }),
+
+  clearAuth: () =>
+    set({
+      accessToken: null,
+      user: null,
+      isAuthenticated: false,
+      isProfileComplete: false,
+    }),
+}));

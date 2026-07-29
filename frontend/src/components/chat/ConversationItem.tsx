@@ -1,0 +1,98 @@
+import type { Conversation } from '../../types/chat';
+import { useAuthStore } from '../../store/auth.store';
+import { formatConversationDate } from '../../lib/format';
+import { cn } from '../../lib/utils';
+
+interface ConversationItemProps {
+  conversation: Conversation;
+  isActive: boolean;
+  onClick: () => void;
+}
+
+export function ConversationItem({ conversation, isActive, onClick }: ConversationItemProps) {
+  const currentUserId = useAuthStore((s) => s.user?._id);
+
+  const otherParticipant = conversation.participants?.find((p) => {
+    const pId = typeof p.userId === 'string' ? p.userId : p.userId._id;
+    return pId !== currentUserId;
+  });
+
+  const otherUserObj = typeof otherParticipant?.userId === 'object' ? otherParticipant.userId : null;
+
+  const title =
+    conversation.type === 'group'
+      ? conversation.name || 'Group Chat'
+      : otherUserObj?.displayName || conversation.name || 'User';
+
+  const avatarUrl =
+    conversation.type === 'group' ? conversation.avatarUrl : otherUserObj?.avatarUrl || conversation.avatarUrl;
+
+  const isOnline = otherUserObj?.privacySettings?.onlineStatus !== 'private';
+
+  const myParticipant = conversation.participants?.find((p) => {
+    const pId = typeof p.userId === 'string' ? p.userId : p.userId._id;
+    return pId === currentUserId;
+  });
+
+  const unreadCount = myParticipant?.unreadCount || 0;
+
+  const lastMessageText = conversation.lastMessage
+    ? conversation.lastMessage.isDeletedForEveryone
+      ? 'This message was deleted'
+      : conversation.lastMessage.content || (conversation.lastMessage.fileId ? 'Attachment' : '')
+    : 'No messages yet';
+
+  const timeDisplay = conversation.updatedAt ? formatConversationDate(conversation.updatedAt) : '';
+
+  return (
+    <div
+      onClick={onClick}
+      className={cn(
+        'flex items-center gap-3 p-3.5 rounded-2xl cursor-pointer transition-all duration-200 border select-none',
+        isActive
+          ? 'bg-violet-50 dark:bg-violet-950/60 border-violet-200 dark:border-violet-900/60 shadow-md shadow-violet-500/5'
+          : 'border-transparent hover:bg-slate-100/80 dark:hover:bg-slate-800/60'
+      )}
+    >
+      <div className="relative flex-shrink-0">
+        {avatarUrl ? (
+          <img
+            src={avatarUrl}
+            alt={title}
+            className="w-12 h-12 rounded-full object-cover border-2 border-slate-200 dark:border-slate-700"
+          />
+        ) : (
+          <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-violet-600 via-indigo-600 to-cyan-500 text-white font-bold flex items-center justify-center text-base shadow-md">
+            {title.slice(0, 2).toUpperCase()}
+          </div>
+        )}
+        {conversation.type !== 'group' && isOnline && (
+          <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full animate-pulse" />
+        )}
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between gap-1 mb-1">
+          <h4 className="text-sm font-bold text-slate-900 dark:text-white truncate">
+            {title}
+          </h4>
+          {timeDisplay && (
+            <span className="text-xs font-medium text-slate-400 dark:text-slate-500 flex-shrink-0">
+              {timeDisplay}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-xs text-slate-500 dark:text-slate-400 truncate leading-relaxed">
+            {lastMessageText}
+          </p>
+          {unreadCount > 0 && (
+            <span className="flex-shrink-0 min-w-[20px] h-[20px] px-1.5 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-[11px] font-bold flex items-center justify-center shadow-md shadow-violet-600/30">
+              {unreadCount}
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

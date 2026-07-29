@@ -13,6 +13,8 @@ const envSchema = z.object({
     .enum(["development", "production", "test"])
     .default("development"),
 
+  CORS_ORIGIN: z.string().default("http://localhost:3000"),
+
   MONGODB_URI: z.string().url("MONGODB_URI must be a valid connection URL"),
 
   REDIS_HOST: z.string().default("localhost"),
@@ -36,8 +38,14 @@ const envSchema = z.object({
   CLOUDINARY_API_KEY: z.string(),
   CLOUDINARY_API_SECRET: z.string(),
 
-  SMTP_HOST: z.string(),
-  SMTP_PORT: z.string().transform((val) => parseInt(val, 10)),
+  // Email API / SMTP Configuration
+  BREVO_API_KEY: z.string().optional().default(""),
+  BREVO_SENDER_EMAIL: z.string().email().optional().default("noreply@chatapp.com"),
+  SMTP_HOST: z.string().optional().default(""),
+  SMTP_PORT: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : 587)),
   SMTP_USER: z.string().optional().default(""),
   SMTP_PASS: z.string().optional().default(""),
   SMTP_FROM: z.string().email().default("noreply@chatapp.com"),

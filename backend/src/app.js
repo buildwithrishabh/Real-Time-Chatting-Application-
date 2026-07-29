@@ -14,9 +14,10 @@ const apiRouter = require("./routes");
 const app = express();
 
 app.use(helmet());
+
 app.use(
   cors({
-    origin: true,
+    origin: env.CORS_ORIGIN,
     credentials: true,
   }),
 );

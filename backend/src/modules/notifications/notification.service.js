@@ -30,6 +30,7 @@ const notifyUser = async ({
 
   let io = null;
   try {
+    const getIO = require("../../socket")
     io = getIO();
   } catch (err) {
     // Socket.io might not be initialized in background worker context
