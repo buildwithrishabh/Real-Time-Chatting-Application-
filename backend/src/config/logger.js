@@ -4,7 +4,6 @@ const config = require("./env");
 
 const { combine, timestamp, json, colorize, printf, errors } = winston.format;
 
-// Custom console format for local development
 const devFormat = printf(({ level, message, timestamp, stack }) => {
   return `${timestamp} [${level}]: ${stack || message}`;
 });
@@ -16,9 +15,16 @@ const logger = winston.createLogger({
     errors({ stack: true }),
     config.NODE_ENV === "production" ? json() : devFormat,
   ),
-  
+
   transports: [
-    // Consolidated logs
+    // Console transport (essential for Render, Docker, PM2, AWS stdout logs)
+    new winston.transports.Console({
+      format:
+        config.NODE_ENV === "production"
+          ? combine(timestamp({ format: "YYYY-MM-DD HH:mm:ss" }), json())
+          : combine(colorize(), timestamp({ format: "HH:mm:ss" }), devFormat),
+    }),
+    // Consolidated logs file
     new DailyRotateFile({
       filename: "logs/combined-%DATE%.log",
       datePattern: "YYYY-MM-DD",
@@ -27,7 +33,8 @@ const logger = winston.createLogger({
       maxFiles: "14d",
       level: "info",
     }),
-    // Error logs only
+    
+    // Error logs file only
     new DailyRotateFile({
       filename: "logs/error-%DATE%.log",
       datePattern: "YYYY-MM-DD",
@@ -38,14 +45,5 @@ const logger = winston.createLogger({
     }),
   ],
 });
-
-// If we are in development, log to the console as well
-if (config.NODE_ENV !== "production") {
-  logger.add(
-    new winston.transports.Console({
-      format: combine(colorize(), timestamp({ format: "HH:mm:ss" }), devFormat),
-    }),
-  );
-}
 
 module.exports = logger;
