@@ -2,7 +2,17 @@ const notificationRepository = require("./notification.repository");
 const { sendNotificationJob } = require("../../queues/notification.queue");
 const { redis } = require("../../redis/client");
 const { AppError, StatusCodes } = require("../../common/appError");
-const { getIO } = require("../../socket");
+
+
+// Lazy getIO retriever to avoid circular dependency with socket/index.js
+const getIOInstance = () => {
+  try {
+    const { getIO } = require("../../socket");
+    return getIO();
+  } catch (err) {
+    return null;
+  }
+};
 
 const notifyUser = async ({
   recipientId,
@@ -28,14 +38,7 @@ const notifyUser = async ({
   const presenceStatus = await redis.get(`presence:status:${recipientId}`);
   const isOnline = presenceStatus === "online";
 
-  let io = null;
-  try {
-    const getIO = require("../../socket")
-    io = getIO();
-  } catch (err) {
-    // Socket.io might not be initialized in background worker context
-    io = null;
-  }
+  const io = getIOInstance();
 
   if (isOnline && io) {
     io.to(`user:${recipientId}`).emit("notification:received", notification);

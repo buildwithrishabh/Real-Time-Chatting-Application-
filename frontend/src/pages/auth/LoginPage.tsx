@@ -6,6 +6,7 @@ import { Mail, Lock, Eye, EyeOff, MessageSquare } from 'lucide-react';
 import { loginSchema } from '../../lib/validators';
 import type { LoginFormData } from '../../lib/validators';
 import { useAuth } from '../../hooks/useAuth';
+import { getErrorMessage } from '../../lib/utils';
 import { toast } from 'sonner';
 
 export function LoginPage() {
@@ -24,11 +25,10 @@ export function LoginPage() {
   const onSubmit = async (data: LoginFormData) => {
     try {
       await login(data);
-      toast.success('Welcome back!');
+      toast.success('Welcome back to ChitChat!');
       navigate('/chat');
     } catch (err: any) {
-      const msg = err.response?.data?.message || 'Invalid credentials';
-      toast.error(msg);
+      toast.error(getErrorMessage(err, 'Invalid email or password'));
     }
   };
 

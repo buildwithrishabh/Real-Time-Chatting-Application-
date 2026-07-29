@@ -36,7 +36,12 @@ client.interceptors.response.use(
     const originalRequest = error.config;
     const status = error.response?.status;
 
-    if (status === 401 && !originalRequest._retry && !originalRequest.url?.includes('/auth/login') && !originalRequest.url?.includes('/auth/refresh')) {
+    if (
+      status === 401 &&
+      !originalRequest._retry &&
+      !originalRequest.url?.includes('/auth/login') &&
+      !originalRequest.url?.includes('/auth/refresh')
+    ) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
@@ -74,8 +79,6 @@ client.interceptors.response.use(
       toast.error('You do not have permission to perform this action');
     } else if (status === 429) {
       toast.error('Too many requests. Please wait a moment.');
-    } else if (status && status >= 500) {
-      toast.error('Server error. Please try again later.');
     } else if (!error.response && error.code !== 'ERR_CANCELED') {
       toast.error('Network error. Check your server connection.');
     }

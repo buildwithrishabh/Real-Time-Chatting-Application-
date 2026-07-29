@@ -6,6 +6,7 @@ import { User as UserIcon, Mail, Lock, Eye, EyeOff, MessageSquare } from 'lucide
 import { registerSchema } from '../../lib/validators';
 import type { RegisterFormData } from '../../lib/validators';
 import { useAuth } from '../../hooks/useAuth';
+import { getErrorMessage } from '../../lib/utils';
 import { toast } from 'sonner';
 
 export function RegisterPage() {
@@ -32,8 +33,7 @@ export function RegisterPage() {
       toast.success('Account created successfully!');
       navigate('/chat');
     } catch (err: any) {
-      const msg = err.response?.data?.message || 'Registration failed';
-      toast.error(msg);
+      toast.error(getErrorMessage(err, 'Registration failed. Please check your details.'));
     }
   };
 
