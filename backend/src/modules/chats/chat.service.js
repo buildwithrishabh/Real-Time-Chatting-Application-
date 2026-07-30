@@ -3,28 +3,30 @@ const chatRepository = require("./chat.repository");
 const { AppError, StatusCodes } = require("../../common/appError");
 const blockRepository = require("../users/block.repository");
 
-const createChat = async (creatorId, { type, name, participantIds }) => {
-  if (participantIds.includes(creatorId.toString())) {
-    throw new AppError(
-      "You cannot create a conversation with yourself",
-      StatusCodes.BAD_REQUEST,
-    );
-  }
+const createChat = async (creatorId, payload) => {
+  const { type, name } = payload;
+  const rawParticipantIds =
+    payload.participantIds || payload.participantUserIds || [];
+
+  const participantIds = [
+    ...new Set(rawParticipantIds.map((id) => id.toString())),
+  ].filter((id) => id !== creatorId.toString());
 
   if (type === "private") {
     if (participantIds.length !== 1) {
       throw new AppError(
-        "Direct message must have exactly one recipent",
+        "Direct message must have exactly one recipient",
         StatusCodes.BAD_REQUEST,
       );
     }
 
-    const recipentId = participantIds[0];
+    const recipientId = participantIds[0];
 
     const isBlocked = await blockRepository.isEitherBlocked(
       creatorId,
-      recipentId,
+      recipientId,
     );
+
     if (isBlocked) {
       throw new AppError(
         "Cannot create chat with this user due to block setting",
@@ -34,37 +36,60 @@ const createChat = async (creatorId, { type, name, participantIds }) => {
 
     const existingChat = await chatRepository.findPrivateConversation(
       creatorId,
-      recipentId,
+      recipientId,
     );
+
     if (existingChat) {
       return existingChat;
     }
+  } else if (type === "group") {
+    if (!name || !name.trim()) {
+      throw new AppError("Group name is required", StatusCodes.BAD_REQUEST);
+    }
+
+    if (participantIds.length === 0) {
+      throw new AppError(
+        "Group chat must have at least one other participant",
+        StatusCodes.BAD_REQUEST,
+      );
+    }
+  } else {
+    throw new AppError("Invalid conversation type", StatusCodes.BAD_REQUEST);
   }
 
   const conversation = await chatRepository.createConversation(
     type,
-    type === "group" ? name : "",
+    type === "group" ? name.trim() : "",
     type === "group" ? creatorId : null,
   );
 
+  // Add creator as participant (admin for group, member for private)
   await chatRepository.addParticipant(
     conversation._id,
     creatorId,
     type === "group" ? "admin" : "member",
   );
 
+  // Add other participants
   for (const memberId of participantIds) {
     await chatRepository.addParticipant(conversation._id, memberId, "member");
 
     if (type === "group") {
-      await notifyUser({
-        recipientId: memberId,
-        senderId: creatorId,
-        type: "GROUP_INVITE",
-        title: "Added to Conversation",
-        body: `You have been added to ${name || "a conversation"}`,
-        chatId: conversation._id,
-      });
+      try {
+        await notifyUser({
+          recipientId: memberId,
+          senderId: creatorId,
+          type: "GROUP_INVITE",
+          title: "Added to Conversation",
+          body: `You have been added to ${name || "a conversation"}`,
+          chatId: conversation._id,
+        });
+      } catch (error) {
+        console.error(
+          "Failed to send group invite notification:",
+          error.message,
+        );
+      }
     }
   }
 
