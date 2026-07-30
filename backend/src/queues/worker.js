@@ -2,6 +2,11 @@ const { Worker } = require("bullmq");
 const connection = require("./connection");
 const logger = require("../config/logger");
 const { sendMail } = require("../utils/email");
+const {
+  getVerificationEmailHtml,
+  getPasswordResetEmailHtml,
+} = require("../utils/emailTemplates");
+const env = require("../config/env");
 
 // Unified Worker Initialization
 const startWorkers = () => {
@@ -10,32 +15,49 @@ const startWorkers = () => {
     "email",
     async (job) => {
       const { to, data } = job.data;
-      logger.info(`Processing email job ID ${job.id} for: ${to}`);
+      logger.info(`Processing email job ID ${job.id} (Type: ${job.name}) for: ${to}`);
+
+      const frontendUrl = env.CORS_ORIGIN || "http://localhost:3000";
 
       switch (job.name) {
-        case "welcome":
+        case "email_verification":
+        case "otp_verification": {
+          const token = data.token || data.otp;
+          const link = data.link || `${frontendUrl}/verify-email?token=${token}`;
+          const html = getVerificationEmailHtml({
+            name: data.username || data.name,
+            link,
+            token,
+          });
+
           await sendMail({
             to,
-            subject: "Welcome to ChatApp!",
-            html: `<p>Hi <strong>${data.username}</strong>, welcome aboard.</p>`,
+            subject: "Verify Your Email Address - ChitChat",
+            html,
           });
           break;
-        case "otp_verification":
+        }
+
+        case "password_reset": {
+          const token = data.token;
+          const link = data.link || `${frontendUrl}/reset-password?token=${token}`;
+          const html = getPasswordResetEmailHtml({
+            name: data.username || data.name,
+            link,
+            token,
+          });
+
           await sendMail({
             to,
-            subject: "Verify Your Email Address",
-            html: `<p>Your OTP token is: <strong>${data.otp}</strong></p><p>This OTP is valid for 10 minutes.</p>`,
+            subject: "Reset Your Password - ChitChat",
+            html,
           });
           break;
-        case "password_reset":
-          await sendMail({
-            to,
-            subject: "Reset Your Password",
-            html: `<p>Your password reset token is: <strong>${data.token}</strong></p>`,
-          });
-          break;
+        }
+
         default:
-          throw new Error(`Unknown email job type: ${job.name}`);
+          logger.warn(`Unknown or deprecated email job type: ${job.name}`);
+          break;
       }
     },
     { connection },

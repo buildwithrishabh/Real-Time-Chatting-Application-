@@ -25,7 +25,12 @@ const register = async ({ username, email, password }) => {
   await authRepository.setVerificationToken(user._id, hashedToken, expiresAt);
 
   // send verification email via background queue
-  await sendEmailJob("otp_verification", email, { otp: token });
+  const frontendUrl = config.CORS_ORIGIN || "http://localhost:3000";
+  await sendEmailJob("email_verification", email, {
+    username: user.username,
+    token,
+    link: `${frontendUrl}/verify-email?token=${token}`,
+  });
 
   return {
     id: user._id,
@@ -198,7 +203,12 @@ const resendVerificationEmail = async (email) => {
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
   await authRepository.setVerificationToken(user._id, hashedToken, expiresAt);
 
-  await sendEmailJob("otp_verification", email, { otp: token });
+  const frontendUrl = config.CORS_ORIGIN || "http://localhost:3000";
+  await sendEmailJob("email_verification", email, {
+    username: user.username,
+    token,
+    link: `${frontendUrl}/verify-email?token=${token}`,
+  });
 
   return {
     success: true,
@@ -220,7 +230,12 @@ const forgotPassword = async (email) => {
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
   await authRepository.savePasswordResetToken(user._id, hashedToken, expiresAt);
 
-  await sendEmailJob("password_reset", email, { token });
+  const frontendUrl = config.CORS_ORIGIN || "http://localhost:3000";
+  await sendEmailJob("password_reset", email, {
+    username: user.displayName || user.username || "User",
+    token,
+    link: `${frontendUrl}/reset-password?token=${token}`,
+  });
 
   return {
     message:
