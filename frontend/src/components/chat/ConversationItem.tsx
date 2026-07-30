@@ -12,17 +12,17 @@ interface ConversationItemProps {
 }
 
 export function ConversationItem({ conversation, isActive, onClick }: ConversationItemProps) {
-  const currentUserId = useAuthStore((s) => s.user?._id || (s.user as any)?.id);
+  const currentUserId = useAuthStore((s) => s.user?._id || (s.user as any)?.id)?.toString();
   const onlineUsers = usePresenceStore((s) => s.onlineUsers);
   const [imgError, setImgError] = useState(false);
 
   const otherParticipant = conversation.participants?.find((p) => {
-    const pId = typeof p.userId === 'string' ? p.userId : p.userId._id;
-    return pId !== currentUserId;
-  });
+    const pId = (typeof p.userId === 'string' ? p.userId : (p.userId?._id || (p.userId as any)?.id))?.toString();
+    return pId && currentUserId ? pId !== currentUserId : true;
+  }) || conversation.participants?.[0];
 
   const otherUserObj = typeof otherParticipant?.userId === 'object' ? otherParticipant.userId : null;
-  const otherUserId = typeof otherParticipant?.userId === 'string' ? otherParticipant.userId : otherUserObj?._id;
+  const otherUserId = (typeof otherParticipant?.userId === 'string' ? otherParticipant.userId : otherUserObj?._id || (otherUserObj as any)?.id)?.toString();
 
   const title =
     conversation.type === 'group'

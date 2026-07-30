@@ -29,7 +29,7 @@ type TabType = 'media' | 'docs' | 'links';
 export function UserProfileDrawer({ activeConversation, messages }: UserProfileDrawerProps) {
   const { isUserProfileDrawerOpen, setUserProfileDrawerOpen } = useUIStore();
   const onlineUsers = usePresenceStore((s) => s.onlineUsers);
-  const currentUserId = useAuthStore((s) => s.user?._id || (s.user as any)?.id);
+  const currentUserId = useAuthStore((s) => s.user?._id || (s.user as any)?.id)?.toString();
 
   const [activeTab, setActiveTab] = useState<TabType>('media');
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
@@ -48,12 +48,12 @@ export function UserProfileDrawer({ activeConversation, messages }: UserProfileD
   if (!isUserProfileDrawerOpen || !activeConversation) return null;
 
   const otherParticipant = activeConversation.participants?.find((p) => {
-    const pId = typeof p.userId === 'string' ? p.userId : p.userId._id;
-    return pId !== currentUserId;
-  });
+    const pId = (typeof p.userId === 'string' ? p.userId : (p.userId?._id || (p.userId as any)?.id))?.toString();
+    return pId && currentUserId ? pId !== currentUserId : true;
+  }) || activeConversation.participants?.[0];
 
   const otherUserObj = typeof otherParticipant?.userId === 'object' ? otherParticipant.userId : null;
-  const otherUserId = (typeof otherParticipant?.userId === 'object' ? otherParticipant.userId._id : otherParticipant?.userId) as string | undefined;
+  const otherUserId = (typeof otherParticipant?.userId === 'string' ? otherParticipant.userId : otherUserObj?._id || (otherUserObj as any)?.id)?.toString();
 
   const isGroup = activeConversation.type === 'group';
   const title = isGroup

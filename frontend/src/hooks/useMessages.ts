@@ -44,7 +44,7 @@ export function useMessages(conversationId: string | null) {
           return {
             ...old,
             pages: [
-              { ...firstPage, items: [...firstPage.items, message] },
+              { ...firstPage, items: [message, ...firstPage.items] },
               ...rest,
             ],
           };

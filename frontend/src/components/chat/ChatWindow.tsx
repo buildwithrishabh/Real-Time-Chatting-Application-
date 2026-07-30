@@ -28,18 +28,22 @@ export function ChatWindow({ activeConversation }: ChatWindowProps) {
   const sendMessageMutation = useSendMessage(conversationId ?? null);
   const { startTyping, stopTyping, typingUsers } = useTyping(conversationId ?? null);
   const onlineUsers = usePresenceStore((s) => s.onlineUsers);
-  const currentUserId = useAuthStore((s) => s.user?._id || (s.user as any)?.id);
+  const currentUserId = useAuthStore((s) => s.user?._id || (s.user as any)?.id)?.toString();
 
   const [searchActive, setSearchActive] = useState(false);
 
-  const realMessages = messagesData?.pages.flatMap((page) => page.items) || [];
+  const realMessages = (messagesData?.pages || [])
+    .slice()
+    .reverse()
+    .flatMap((page) => page.items.slice().reverse());
 
   const otherParticipant = activeConversation?.participants?.find((p) => {
-    const pId = typeof p.userId === 'string' ? p.userId : p.userId._id;
-    return pId !== currentUserId;
-  });
-  const otherUserId = (typeof otherParticipant?.userId === 'object' ? otherParticipant.userId._id : otherParticipant?.userId) as string | undefined;
+    const pId = (typeof p.userId === 'string' ? p.userId : (p.userId?._id || (p.userId as any)?.id))?.toString();
+    return pId && currentUserId ? pId !== currentUserId : true;
+  }) || activeConversation?.participants?.[0];
+
   const otherUserObj = typeof otherParticipant?.userId === 'object' ? otherParticipant.userId : null;
+  const otherUserId = (typeof otherParticipant?.userId === 'string' ? otherParticipant.userId : otherUserObj?._id || (otherUserObj as any)?.id)?.toString();
 
   const headerTitle = activeConversation?.type === 'group'
     ? activeConversation.name || 'Group Chat'

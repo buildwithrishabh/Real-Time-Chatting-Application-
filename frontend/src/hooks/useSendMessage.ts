@@ -72,7 +72,7 @@ export function useSendMessage(conversationId: string | null) {
           return {
             ...old,
             pages: [
-              { ...firstPage, items: [...firstPage.items, tempMessage] },
+              { ...firstPage, items: [tempMessage, ...firstPage.items] },
               ...rest,
             ],
           };
