@@ -18,11 +18,19 @@ const findUsersByQuery = async (
   currentUserId = null,
   limit = 20,
 ) => {
+  if (!searchQuery || !searchQuery.trim()) return [];
+
+  // Escape special regex characters & create fast prefix regex
+  const escapedQuery = searchQuery.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const regex = new RegExp(`^${escapedQuery}`, "i");
+
   let excludedUserIds = [];
   if (currentUserId) {
     const blocks = await BlockedUser.find({
       $or: [{ blockerId: currentUserId }, { blockedId: currentUserId }],
-    }).select("blockerId blockedId");
+    })
+      .select("blockerId blockedId")
+      .lean();
 
     excludedUserIds = blocks.map((b) =>
       b.blockerId.toString() === currentUserId.toString()
@@ -35,14 +43,15 @@ const findUsersByQuery = async (
 
   return User.find({
     _id: { $nin: excludedUserIds },
-    $or: [
-      { username: { $regex: searchQuery, $options: "i" } },
-      { displayName: { $regex: searchQuery, $options: "i" } },
-    ],
     status: "active",
+    $or: [
+      { username: regex },
+      { displayName: regex },
+    ],
   })
     .select("username displayName avatarUrl bio isProfileComplete")
-    .limit(limit);
+    .limit(limit)
+    .lean();
 };
 
 module.exports = {

@@ -72,7 +72,8 @@ const UserSchema = new mongoose.Schema(
 );
 
 // Indexes
-UserSchema.index({ username: "text", email: "text" });
+UserSchema.index({ status: 1 , username: 1});
+UserSchema.index({ status: 1 , displayName: 1});
 
 // Pre-save hook to hash password if modified
 UserSchema.pre("save", async function () {
