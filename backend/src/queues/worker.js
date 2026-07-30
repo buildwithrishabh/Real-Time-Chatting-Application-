@@ -17,7 +17,7 @@ const startWorkers = () => {
       const { to, data } = job.data;
       logger.info(`Processing email job ID ${job.id} (Type: ${job.name}) for: ${to}`);
 
-      const frontendUrl = env.CORS_ORIGIN || "http://localhost:3000";
+      const frontendUrl = (env.CORS_ORIGIN || "http://localhost:3000").replace(/\/+$/, "");
 
       switch (job.name) {
         case "email_verification":

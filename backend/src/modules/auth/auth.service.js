@@ -25,7 +25,7 @@ const register = async ({ username, email, password }) => {
   await authRepository.setVerificationToken(user._id, hashedToken, expiresAt);
 
   // send verification email via background queue
-  const frontendUrl = config.CORS_ORIGIN || "http://localhost:3000";
+  const frontendUrl = (config.CORS_ORIGIN || "http://localhost:3000").replace(/\/+$/, "");
   await sendEmailJob("email_verification", email, {
     username: user.username,
     token,
@@ -203,7 +203,7 @@ const resendVerificationEmail = async (email) => {
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
   await authRepository.setVerificationToken(user._id, hashedToken, expiresAt);
 
-  const frontendUrl = config.CORS_ORIGIN || "http://localhost:3000";
+  const frontendUrl = (config.CORS_ORIGIN || "http://localhost:3000").replace(/\/+$/, "");
   await sendEmailJob("email_verification", email, {
     username: user.username,
     token,
@@ -230,7 +230,7 @@ const forgotPassword = async (email) => {
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
   await authRepository.savePasswordResetToken(user._id, hashedToken, expiresAt);
 
-  const frontendUrl = config.CORS_ORIGIN || "http://localhost:3000";
+  const frontendUrl = (config.CORS_ORIGIN || "http://localhost:3000").replace(/\/+$/, "");
   await sendEmailJob("password_reset", email, {
     username: user.displayName || user.username || "User",
     token,
