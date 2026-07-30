@@ -30,8 +30,8 @@ export function RegisterPage() {
         password: data.password,
         confirmPassword: data.confirmPassword,
       });
-      toast.success('Account created successfully!');
-      navigate('/chat');
+      toast.success('Account created! Please check your email to verify your account before logging in.');
+      navigate('/login');
     } catch (err: any) {
       toast.error(getErrorMessage(err, 'Registration failed. Please check your details.'));
     }

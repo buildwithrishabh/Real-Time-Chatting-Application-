@@ -26,10 +26,6 @@ export function useAuth() {
         email: data.email,
         password: data.password,
       }),
-    onSuccess: (data) => {
-      setAuth(data.accessToken, data.user, data.isProfileComplete);
-      connectSocket();
-    },
   });
 
   const logoutMutation = useMutation({

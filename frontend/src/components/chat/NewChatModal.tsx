@@ -219,7 +219,7 @@ export function NewChatModal() {
               type="text"
               value={query}
               onChange={(e) => handleSearch(e.target.value)}
-              placeholder={mode === 'private' ? 'Search by username or email...' : 'Add participants...'}
+              placeholder={mode === 'private' ? 'Search by username...' : 'Add participants...'}
               className="w-full pl-10 pr-4 py-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
               aria-label="Search users input"
             />

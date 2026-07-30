@@ -1,7 +1,13 @@
 import { create } from 'zustand';
 import type { User } from '../types/user';
 
-function generateDeviceId(): string {
+function getOrCreateDeviceId(): string {
+  const STORAGE_KEY = 'chat_device_id';
+  let deviceId = localStorage.getItem(STORAGE_KEY);
+  if (deviceId) {
+    return deviceId;
+  }
+
   const fingerprint = [
     navigator.userAgent,
     navigator.language,
@@ -17,7 +23,9 @@ function generateDeviceId(): string {
     hash |= 0;
   }
 
-  return `${Math.abs(hash).toString(36)}-${crypto.randomUUID().slice(0, 8)}`;
+  deviceId = `${Math.abs(hash).toString(36)}-${crypto.randomUUID().slice(0, 8)}`;
+  localStorage.setItem(STORAGE_KEY, deviceId);
+  return deviceId;
 }
 
 interface AuthState {
@@ -36,7 +44,7 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set) => ({
   accessToken: null,
   user: null,
-  deviceId: generateDeviceId(),
+  deviceId: getOrCreateDeviceId(),
   isAuthenticated: false,
   isProfileComplete: false,
 

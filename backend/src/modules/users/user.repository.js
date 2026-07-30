@@ -43,13 +43,13 @@ const findUsersByQuery = async (
 
   return User.find({
     _id: { $nin: excludedUserIds },
-    status: "active",
+    status: { $ne: "suspended" },
     $or: [
       { username: regex },
       { displayName: regex },
     ],
   })
-    .select("username displayName avatarUrl bio isProfileComplete")
+    .select("username displayName avatarUrl")
     .limit(limit)
     .lean();
 };
