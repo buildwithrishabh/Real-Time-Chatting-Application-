@@ -12,7 +12,8 @@ export function useConversations() {
     queryFn: ({ pageParam }) =>
       chatsApi.list({ cursor: pageParam, limit: PAGINATION.CONVERSATIONS_LIMIT }),
     initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => (lastPage.hasNext ? lastPage.nextCursor ?? undefined : undefined),
+    getNextPageParam: (lastPage: any) =>
+      (lastPage?.hasMore || lastPage?.hasNext) ? lastPage.nextCursor ?? undefined : undefined,
   });
 
   useEffect(() => {

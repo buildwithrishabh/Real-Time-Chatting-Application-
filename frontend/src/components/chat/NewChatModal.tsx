@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { X, Search, UserPlus, Users, Check, ChevronRight } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useUIStore } from '../../store/ui.store';
 import { usersApi } from '../../api/users.api';
 import { chatsApi } from '../../api/chats.api';
@@ -9,6 +10,7 @@ import { toast } from 'sonner';
 import { cn } from '../../lib/utils';
 
 export function NewChatModal() {
+  const queryClient = useQueryClient();
   const { isNewChatOpen, setNewChatOpen } = useUIStore();
   const { setActiveConversation } = useChatStore();
   const [mode, setMode] = useState<'private' | 'group'>('private');
@@ -86,6 +88,7 @@ export function NewChatModal() {
         type: 'private',
         participantUserIds: [user._id],
       });
+      await queryClient.invalidateQueries({ queryKey: ['conversations'] });
       setActiveConversation(conv._id);
       setNewChatOpen(false);
       toast.success(`Chat started with ${user.displayName || user.username}`);
@@ -113,6 +116,7 @@ export function NewChatModal() {
         name: groupName.trim(),
         participantUserIds: selectedUsers.map((u) => u._id),
       });
+      await queryClient.invalidateQueries({ queryKey: ['conversations'] });
       setActiveConversation(conv._id);
       setNewChatOpen(false);
       toast.success(`Group "${groupName}" created`);

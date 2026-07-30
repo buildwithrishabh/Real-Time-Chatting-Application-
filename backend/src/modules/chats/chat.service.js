@@ -93,7 +93,14 @@ const createChat = async (creatorId, payload) => {
     }
   }
 
-  return conversation;
+  const conversationObj = conversation.toObject
+    ? conversation.toObject()
+    : conversation;
+  const participants = await chatRepository.getParticipants(conversation._id);
+  return {
+    ...conversationObj,
+    participants,
+  };
 };
 
 const addParticipant = async (adminId, conversationId, targetUserId) => {
@@ -159,7 +166,24 @@ const addParticipant = async (adminId, conversationId, targetUserId) => {
 };
 
 const getConversations = async (userId, cursor, limit = 15) => {
-  return chatRepository.findUserConversations(userId, cursor, limit);
+  const conversations = await chatRepository.findUserConversations(
+    userId,
+    cursor,
+    limit,
+  );
+
+  const conversationsWithParticipants = await Promise.all(
+    conversations.map(async (conv) => {
+      const convObj = conv.toObject ? conv.toObject() : conv;
+      const participants = await chatRepository.getParticipants(conv._id);
+      return {
+        ...convObj,
+        participants,
+      };
+    }),
+  );
+
+  return conversationsWithParticipants;
 };
 
 const removeUser = async (adminId, conversationId, targetUserId) => {
