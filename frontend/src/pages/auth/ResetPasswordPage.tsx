@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useParams, useNavigate } from 'react-router-dom';
 import { KeyRound, Loader2, ArrowLeft, MessageSquare } from 'lucide-react';
 import { authApi } from '../../api/auth.api';
 import { toast } from 'sonner';
 
 export function ResetPasswordPage() {
+  const { token: pathToken } = useParams();
   const [searchParams] = useSearchParams();
-  const token = searchParams.get('token');
+  const token = pathToken || searchParams.get('token');
   const navigate = useNavigate();
 
   const [newPassword, setNewPassword] = useState('');
