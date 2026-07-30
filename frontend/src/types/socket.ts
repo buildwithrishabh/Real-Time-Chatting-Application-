@@ -1,5 +1,5 @@
 import type { Message } from './message';
-import type { Notification } from './notification';
+import type { AppNotification } from './notification';
 
 export interface SocketEvents {
   // Client -> Server
@@ -33,7 +33,7 @@ export interface SocketEvents {
     status: 'online' | 'offline';
     lastSeenAt?: string;
   }) => void;
-  'notification:received': (notification: Notification) => void;
+  'notification:received': (notification: AppNotification) => void;
   'file:scan_status': (data: {
     fileId: string;
     publicId: string;

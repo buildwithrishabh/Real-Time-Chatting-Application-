@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { SlidersHorizontal, MessageSquareOff, WifiOff } from 'lucide-react';
+import { MessageSquareOff, WifiOff, Menu } from 'lucide-react';
 import { SearchBar } from './SearchBar';
 import { ConversationItem } from './ConversationItem';
 import type { Conversation } from '../../types/chat';
@@ -20,7 +20,7 @@ export function ChatSidebar({ conversations, isLoading }: ChatSidebarProps) {
   const [filterTab, setFilterTab] = useState<FilterTab>('all');
   const { activeConversationId, setActiveConversation } = useChatStore();
   const isConnected = useSocketStore((s) => s.isConnected);
-  const { setNewChatOpen } = useUIStore();
+  const { setNewChatOpen, setMobileDrawerOpen } = useUIStore();
 
   const filteredConversations = conversations.filter((conv) => {
     const title = conv.name || '';
@@ -38,7 +38,7 @@ export function ChatSidebar({ conversations, isLoading }: ChatSidebarProps) {
   });
 
   return (
-    <div className="w-80 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0F172A] flex flex-col h-screen select-none">
+    <div className="w-full md:w-80 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0F172A] flex flex-col h-screen select-none">
       {/* Connection Status */}
       {!isConnected && (
         <div className="px-4 py-2 bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-900/60">
@@ -52,15 +52,17 @@ export function ChatSidebar({ conversations, isLoading }: ChatSidebarProps) {
 
       <div className="p-4 pb-2">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
-            Chats
-          </h2>
-          <button
-            onClick={() => setNewChatOpen(true)}
-            className="p-2 text-slate-500 hover:text-violet-600 dark:text-slate-400 dark:hover:text-violet-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
-          >
-            <SlidersHorizontal className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setMobileDrawerOpen(true)}
+              className="md:hidden p-2 text-slate-500 hover:text-violet-600 dark:text-slate-400 dark:hover:text-violet-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
+              Chats
+            </h2>
+          </div>
         </div>
 
         <SearchBar value={searchQuery} onChange={setSearchQuery} />
@@ -78,21 +80,30 @@ export function ChatSidebar({ conversations, isLoading }: ChatSidebarProps) {
             </button>
           </div>
         ) : (
-          <div className="flex gap-1 mt-3">
-            {(['all', 'unread', 'groups'] as const).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setFilterTab(tab)}
-                className={cn(
-                  'px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors capitalize',
-                  filterTab === tab
-                    ? 'bg-violet-100 dark:bg-violet-900/50 text-violet-700 dark:text-violet-300'
-                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-                )}
-              >
-                {tab}
-              </button>
-            ))}
+          <div className="flex items-center justify-between gap-1 mt-3">
+            <div className="flex gap-1">
+              {(['all', 'unread', 'groups'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setFilterTab(tab)}
+                  className={cn(
+                    'px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors capitalize',
+                    filterTab === tab
+                      ? 'bg-violet-100 dark:bg-violet-900/50 text-violet-700 dark:text-violet-300'
+                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                  )}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setNewChatOpen(true)}
+              className="px-2.5 py-1.5 text-xs font-bold text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/40 rounded-lg flex items-center gap-1 transition-colors"
+            >
+              <span>New</span>
+            </button>
           </div>
         )}
       </div>

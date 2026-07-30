@@ -1,14 +1,19 @@
+import { useState } from 'react';
 import { Search, Phone, Video, MoreVertical, ArrowLeft, Info } from 'lucide-react';
 import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
+import { UserProfileDrawer } from './UserProfileDrawer';
 import type { Conversation } from '../../types/chat';
 import { messagesApi } from '../../api/messages.api';
 import { useSendMessage } from '../../hooks/useSendMessage';
 import { useMessages } from '../../hooks/useMessages';
 import { useTyping } from '../../hooks/useTyping';
 import { useChatStore } from '../../store/chat.store';
+import { useUIStore } from '../../store/ui.store';
 import { usePresenceStore } from '../../store/presence.store';
 import { useAuthStore } from '../../store/auth.store';
+import { formatConversationDate } from '../../lib/format';
+import { toast } from 'sonner';
 import { cn } from '../../lib/utils';
 
 interface ChatWindowProps {
@@ -17,12 +22,15 @@ interface ChatWindowProps {
 
 export function ChatWindow({ activeConversation }: ChatWindowProps) {
   const setActiveConversation = useChatStore((s) => s.setActiveConversation);
+  const setUserProfileDrawerOpen = useUIStore((s) => s.setUserProfileDrawerOpen);
   const conversationId = activeConversation?._id;
-  const { data: messagesData, fetchNextPage, hasNextPage, isFetchingNextPage } = useMessages(conversationId ?? null);
+  const { data: messagesData, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading: isMessagesLoading } = useMessages(conversationId ?? null);
   const sendMessageMutation = useSendMessage(conversationId ?? null);
   const { startTyping, stopTyping, typingUsers } = useTyping(conversationId ?? null);
   const onlineUsers = usePresenceStore((s) => s.onlineUsers);
-  const currentUserId = useAuthStore((s) => s.user?._id);
+  const currentUserId = useAuthStore((s) => s.user?._id || (s.user as any)?.id);
+
+  const [searchActive, setSearchActive] = useState(false);
 
   const realMessages = messagesData?.pages.flatMap((page) => page.items) || [];
 
@@ -80,15 +88,25 @@ export function ChatWindow({ activeConversation }: ChatWindowProps) {
   }
 
   return (
-    <div className="flex-1 flex flex-col h-screen bg-slate-50/50 dark:bg-[#0B0F19] transition-colors">
+    <div className="flex-1 flex flex-col h-screen bg-slate-50/50 dark:bg-[#0B0F19] transition-colors relative">
       {/* Header */}
-      <div className="h-16 px-4 sm:px-6 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/90 dark:bg-[#0B0F19]/90 backdrop-blur-md flex items-center justify-between shadow-2xs select-none flex-shrink-0">
-        <div className="flex items-center gap-3 min-w-0">
+      <div className="h-16 px-3 sm:px-6 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/90 dark:bg-[#0B0F19]/90 backdrop-blur-md flex items-center justify-between shadow-2xs select-none flex-shrink-0">
+        
+        {/* Clickable Contact Profile Header */}
+        <div
+          onClick={() => setUserProfileDrawerOpen(true)}
+          className="flex items-center gap-2 sm:gap-3 min-w-0 cursor-pointer hover:opacity-90 transition-opacity"
+          title="Click to view Contact Profile & Shared Media"
+        >
           <button
-            onClick={() => setActiveConversation(null)}
-            className="md:hidden p-2 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white rounded-xl"
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveConversation(null);
+            }}
+            className="md:hidden p-2 -ml-1 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95 transition-all"
+            aria-label="Back to conversations list"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-5 h-5 stroke-[2.5]" />
           </button>
 
           <div className="relative flex-shrink-0">
@@ -96,48 +114,69 @@ export function ChatWindow({ activeConversation }: ChatWindowProps) {
               <img
                 src={headerAvatar}
                 alt={headerTitle}
-                className="w-10 h-10 rounded-full object-cover border-2 border-violet-500/30"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-violet-500/30"
               />
             ) : (
-              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-violet-600 to-indigo-600 text-white font-bold flex items-center justify-center text-sm shadow-md">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-tr from-violet-600 to-indigo-600 text-white font-bold flex items-center justify-center text-xs sm:text-sm shadow-md">
                 {headerTitle.slice(0, 2).toUpperCase()}
               </div>
             )}
             {activeConversation.type !== 'group' && (
               <span
                 className={cn(
-                  'absolute bottom-0 right-0 w-3 h-3 border-2 border-white dark:border-slate-900 rounded-full transition-colors duration-300',
+                  'absolute bottom-0 right-0 w-2.5 h-2.5 sm:w-3 sm:h-3 border-2 border-white dark:border-slate-900 rounded-full transition-colors duration-300',
                   isOnline ? 'bg-emerald-500' : 'bg-slate-400 dark:bg-slate-600'
                 )}
               />
             )}
           </div>
-          <div className="min-w-0">
-            <h3 className="text-base font-bold text-slate-900 dark:text-white leading-tight truncate">
+          <div className="min-w-0 flex-1">
+            <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white leading-tight truncate">
               {headerTitle}
             </h3>
-            <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">
+            <span className="text-[11px] sm:text-xs font-semibold text-slate-400 dark:text-slate-500 block truncate">
               {activeConversation.type === 'group'
                 ? `${activeConversation.participants?.length || 0} members`
                 : isOnline
                   ? 'Online'
-                  : 'Offline'}
+                  : otherUserObj?.lastSeenAt
+                    ? `Last seen ${formatConversationDate(otherUserObj.lastSeenAt)}`
+                    : 'Offline'}
             </span>
           </div>
         </div>
 
         {/* Header Actions */}
-        <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400 flex-shrink-0">
-          <button className="p-2 sm:p-2.5 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-colors">
+        <div className="flex items-center gap-0.5 sm:gap-1 text-slate-500 dark:text-slate-400 flex-shrink-0">
+          <button
+            onClick={() => setSearchActive((prev) => !prev)}
+            className={cn(
+              'p-2 sm:p-2.5 rounded-2xl transition-colors',
+              searchActive ? 'text-violet-600 bg-violet-50 dark:bg-violet-950/60' : 'hover:text-violet-600 dark:hover:text-violet-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+            )}
+            aria-label="Search conversation messages"
+          >
             <Search className="w-5 h-5" />
           </button>
-          <button className="p-2 sm:p-2.5 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-colors">
+          <button
+            onClick={() => toast.info('Voice calling coming soon!')}
+            className="hidden sm:inline-flex p-2 sm:p-2.5 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-colors"
+            aria-label="Start voice call"
+          >
             <Phone className="w-5 h-5" />
           </button>
-          <button className="p-2 sm:p-2.5 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-colors">
+          <button
+            onClick={() => toast.info('Video calling coming soon!')}
+            className="hidden sm:inline-flex p-2 sm:p-2.5 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-colors"
+            aria-label="Start video call"
+          >
             <Video className="w-5 h-5" />
           </button>
-          <button className="p-2 sm:p-2.5 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-colors">
+          <button
+            onClick={() => setUserProfileDrawerOpen(true)}
+            className="p-2 sm:p-2.5 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-colors"
+            aria-label="Contact info & shared media"
+          >
             <MoreVertical className="w-5 h-5" />
           </button>
         </div>
@@ -152,6 +191,7 @@ export function ChatWindow({ activeConversation }: ChatWindowProps) {
         fetchNextPage={fetchNextPage}
         hasNextPage={hasNextPage}
         isFetchingNextPage={isFetchingNextPage}
+        isLoading={isMessagesLoading}
       />
 
       {/* Input */}
@@ -160,6 +200,12 @@ export function ChatWindow({ activeConversation }: ChatWindowProps) {
         onTypingStart={startTyping}
         onTypingStop={stopTyping}
         conversationId={conversationId}
+      />
+
+      {/* User Profile & Shared Media Drawer */}
+      <UserProfileDrawer
+        activeConversation={activeConversation}
+        messages={realMessages}
       />
     </div>
   );

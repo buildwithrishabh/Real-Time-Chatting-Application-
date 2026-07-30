@@ -32,6 +32,16 @@ export function NewChatModal() {
     }
   }, [isNewChatOpen]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isNewChatOpen) {
+        setNewChatOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isNewChatOpen, setNewChatOpen]);
+
   const handleSearch = useCallback(async (q: string) => {
     setQuery(q);
     if (!q.trim()) {
@@ -115,11 +125,15 @@ export function NewChatModal() {
 
   if (!isNewChatOpen) return null;
 
-
-
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full shadow-2xl animate-scale-in overflow-hidden">
+    <div
+      className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4"
+      onClick={() => setNewChatOpen(false)}
+    >
+      <div
+        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full shadow-2xl animate-scale-in overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-6 pb-4 border-b border-slate-100 dark:border-slate-800">
           <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -129,6 +143,7 @@ export function NewChatModal() {
           <button
             onClick={() => setNewChatOpen(false)}
             className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800"
+            aria-label="Close modal"
           >
             <X className="w-5 h-5" />
           </button>
@@ -144,6 +159,7 @@ export function NewChatModal() {
                 ? 'bg-violet-100 dark:bg-violet-900/50 text-violet-700 dark:text-violet-300'
                 : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
             )}
+            aria-label="Switch to private chat mode"
           >
             Private
           </button>
@@ -155,6 +171,7 @@ export function NewChatModal() {
                 ? 'bg-violet-100 dark:bg-violet-900/50 text-violet-700 dark:text-violet-300'
                 : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
             )}
+            aria-label="Switch to group chat mode"
           >
             Group
           </button>
@@ -169,6 +186,7 @@ export function NewChatModal() {
               onChange={(e) => setGroupName(e.target.value)}
               placeholder="Enter group name..."
               className="w-full px-4 py-2.5 mb-3 bg-slate-100 dark:bg-slate-800 rounded-xl text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 font-semibold"
+              aria-label="Group name input"
             />
           )}
 
@@ -184,6 +202,7 @@ export function NewChatModal() {
                   <button
                     onClick={() => setSelectedUsers((prev) => prev.filter((u) => u._id !== user._id))}
                     className="hover:text-violet-900 dark:hover:text-violet-100"
+                    aria-label={`Remove ${user.displayName || user.username}`}
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -202,6 +221,7 @@ export function NewChatModal() {
               onChange={(e) => handleSearch(e.target.value)}
               placeholder={mode === 'private' ? 'Search by username or email...' : 'Add participants...'}
               className="w-full pl-10 pr-4 py-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+              aria-label="Search users input"
             />
           </div>
         </div>
@@ -272,6 +292,7 @@ export function NewChatModal() {
               onClick={handleCreateGroup}
               disabled={isCreating || !groupName.trim()}
               className="w-full py-3 gradient-btn hover:scale-[1.02] active:scale-[0.98] text-white font-bold rounded-2xl flex items-center justify-center gap-2 transition-all duration-200 disabled:opacity-50 disabled:hover:scale-100"
+              aria-label="Create group"
             >
               {isCreating ? (
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />

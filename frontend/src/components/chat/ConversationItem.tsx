@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { usePresenceStore } from '../../store/presence.store';
 import type { Conversation } from '../../types/chat';
 import { useAuthStore } from '../../store/auth.store';
@@ -11,8 +12,9 @@ interface ConversationItemProps {
 }
 
 export function ConversationItem({ conversation, isActive, onClick }: ConversationItemProps) {
-  const currentUserId = useAuthStore((s) => s.user?._id);
+  const currentUserId = useAuthStore((s) => s.user?._id || (s.user as any)?.id);
   const onlineUsers = usePresenceStore((s) => s.onlineUsers);
+  const [imgError, setImgError] = useState(false);
 
   const otherParticipant = conversation.participants?.find((p) => {
     const pId = typeof p.userId === 'string' ? p.userId : p.userId._id;
@@ -63,19 +65,20 @@ export function ConversationItem({ conversation, isActive, onClick }: Conversati
       className={cn(
         'flex items-center gap-3 p-3.5 rounded-2xl cursor-pointer transition-all duration-200 border select-none',
         isActive
-          ? 'bg-violet-50 dark:bg-violet-950/60 border-violet-200 dark:border-violet-900/60 shadow-md shadow-violet-500/5'
+          ? 'active-accent-card shadow-md'
           : 'border-transparent hover:bg-slate-100/80 dark:hover:bg-slate-800/60'
       )}
     >
       <div className="relative flex-shrink-0">
-        {avatarUrl ? (
+        {avatarUrl && !imgError ? (
           <img
             src={avatarUrl}
             alt={title}
+            onError={() => setImgError(true)}
             className="w-12 h-12 rounded-full object-cover border-2 border-slate-200 dark:border-slate-700"
           />
         ) : (
-          <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-violet-600 via-indigo-600 to-cyan-500 text-white font-bold flex items-center justify-center text-base shadow-md">
+          <div className="w-12 h-12 rounded-full gradient-btn text-white font-bold flex items-center justify-center text-base shadow-md">
             {title.slice(0, 2).toUpperCase()}
           </div>
         )}
@@ -107,7 +110,7 @@ export function ConversationItem({ conversation, isActive, onClick }: Conversati
             {lastMessageText}
           </p>
           {unreadCount > 0 && (
-            <span className="flex-shrink-0 min-w-[20px] h-[20px] px-1.5 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-[11px] font-bold flex items-center justify-center shadow-md shadow-violet-600/30">
+            <span className="flex-shrink-0 min-w-[20px] h-[20px] px-1.5 rounded-full gradient-btn text-white text-[11px] font-bold flex items-center justify-center shadow-md">
               {unreadCount > 99 ? '99+' : unreadCount}
             </span>
           )}

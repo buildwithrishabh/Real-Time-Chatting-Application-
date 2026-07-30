@@ -5,6 +5,7 @@ import { useAuthStore } from '../store/auth.store';
 import type { Message } from '../types/message';
 import type { CursorPage } from '../types/api';
 import { messagesApi } from '../api/messages.api';
+import { toast } from 'sonner';
 
 export function useSendMessage(conversationId: string | null) {
   const queryClient = useQueryClient();
@@ -81,10 +82,11 @@ export function useSendMessage(conversationId: string | null) {
       return { previous };
     },
 
-    onError: (_err, _payload, context) => {
+    onError: (err, _payload, context) => {
       if (conversationId && context?.previous) {
         queryClient.setQueryData(['messages', conversationId], context.previous);
       }
+      toast.error(err instanceof Error ? err.message : 'Failed to send message. Please try again.');
     },
 
     onSettled: () => {

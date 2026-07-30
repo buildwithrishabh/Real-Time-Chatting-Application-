@@ -13,6 +13,7 @@ interface MessageListProps {
   fetchNextPage?: () => void;
   hasNextPage?: boolean;
   isFetchingNextPage?: boolean;
+  isLoading?: boolean;
 }
 
 function getDateLabel(dateStr: string): string {
@@ -26,8 +27,17 @@ function getDateLabel(dateStr: string): string {
   return date.toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' });
 }
 
-export function MessageList({ messages, isTyping, typingUserName, onReact, fetchNextPage, hasNextPage, isFetchingNextPage }: MessageListProps) {
-  const currentUserId = useAuthStore((s) => s.user?._id);
+export function MessageList({
+  messages,
+  isTyping,
+  typingUserName,
+  onReact,
+  fetchNextPage,
+  hasNextPage,
+  isFetchingNextPage,
+  isLoading,
+}: MessageListProps) {
+  const currentUserId = useAuthStore((s) => s.user?._id || (s.user as any)?.id);
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<HTMLDivElement>(null);
@@ -59,7 +69,7 @@ export function MessageList({ messages, isTyping, typingUserName, onReact, fetch
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
-              fetchNextPage();
+          fetchNextPage();
         }
       },
       { threshold: 0.1 }
@@ -68,6 +78,26 @@ export function MessageList({ messages, isTyping, typingUserName, onReact, fetch
     observer.observe(observerRef.current);
     return () => observer.disconnect();
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+        {[1, 2, 3, 4].map((n) => (
+          <div
+            key={n}
+            className={`flex flex-col gap-2 ${n % 2 === 0 ? 'items-end' : 'items-start'} animate-pulse`}
+          >
+            <div
+              className={`h-12 rounded-2xl bg-slate-200 dark:bg-slate-800 ${
+                n % 2 === 0 ? 'w-48 sm:w-64 rounded-br-xs' : 'w-56 sm:w-72 rounded-bl-xs'
+              }`}
+            />
+            <div className="h-3 w-16 bg-slate-200 dark:bg-slate-800/60 rounded" />
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   const showDateDividers = messages.length > 0;
   let lastDateLabel = '';
@@ -85,6 +115,7 @@ export function MessageList({ messages, isTyping, typingUserName, onReact, fetch
             <button
               onClick={fetchNextPage}
               className="text-xs text-violet-600 dark:text-violet-400 font-semibold hover:underline"
+              aria-label="Load older messages"
             >
               Load older messages
             </button>
@@ -98,7 +129,8 @@ export function MessageList({ messages, isTyping, typingUserName, onReact, fetch
           const showDate = dateLabel !== lastDateLabel;
           lastDateLabel = dateLabel;
 
-          const isOwn = message.senderId === currentUserId;
+          const senderIdVal = typeof message.senderId === 'object' ? (message.senderId as any)?._id : message.senderId;
+          const isOwn = senderIdVal === currentUserId;
 
           return (
             <div key={message._id}>

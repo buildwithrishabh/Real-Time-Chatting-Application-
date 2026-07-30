@@ -24,7 +24,7 @@ export function MessageBubble({ message, isOwn, onReact, onEdit, onDelete }: Mes
   const reactionsRef = useRef<HTMLDivElement>(null);
   const actionsRef = useRef<HTMLDivElement>(null);
   const editInputRef = useRef<HTMLInputElement>(null);
-  const currentUserId = useAuthStore((s) => s.user?._id);
+  const currentUserId = useAuthStore((s) => s.user?._id || (s.user as any)?.id);
 
   const reactionsList = Object.entries(message.reactions || {}).filter(([_, users]) => users.length > 0);
   const userReactedEmojis = reactionsList
@@ -88,16 +88,16 @@ export function MessageBubble({ message, isOwn, onReact, onEdit, onDelete }: Mes
     <>
       <div
         className={cn(
-          'group relative flex items-end gap-2.5 mb-3.5 max-w-[85%] sm:max-w-[75%]',
+          'group relative flex items-end gap-2 mb-3 max-w-[88%] sm:max-w-[75%]',
           isOwn ? 'ml-auto flex-row-reverse' : 'mr-auto'
         )}
       >
         <div className="flex flex-col">
           <div
             className={cn(
-              'relative px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm transition-all duration-200',
+              'relative px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-xs transition-all duration-200',
               isOwn
-                ? 'bg-gradient-to-tr from-violet-600 via-indigo-600 to-indigo-700 text-white rounded-br-xs shadow-violet-600/20'
+                ? 'sent-bubble rounded-br-xs'
                 : 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200/80 dark:border-slate-700/80 rounded-bl-xs'
             )}
           >
@@ -107,6 +107,7 @@ export function MessageBubble({ message, isOwn, onReact, onEdit, onDelete }: Mes
                   <button
                     onClick={() => setLightboxOpen(true)}
                     className="block w-full"
+                    aria-label="View attachment"
                   >
                     <img
                       src={message.fileUrl}
@@ -121,6 +122,7 @@ export function MessageBubble({ message, isOwn, onReact, onEdit, onDelete }: Mes
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-3 p-3 bg-slate-100 dark:bg-slate-900 rounded-xl hover:opacity-90 transition-opacity"
+                    aria-label="Open file attachment"
                   >
                     <FileText className="w-6 h-6 text-violet-500 flex-shrink-0" />
                     <div className="min-w-0 flex-1">
@@ -147,24 +149,26 @@ export function MessageBubble({ message, isOwn, onReact, onEdit, onDelete }: Mes
                   className={cn(
                     'flex-1 bg-transparent border-b-2 outline-none text-sm font-medium',
                     isOwn
-                      ? 'border-violet-300 text-white placeholder:text-violet-200'
+                      ? 'border-white/80 text-white placeholder:text-white/60'
                       : 'border-violet-500 text-slate-900 dark:text-white'
                   )}
+                  aria-label="Edit message input"
                 />
                 <button
                   onClick={() => setIsEditing(false)}
                   className="p-1 rounded-full hover:bg-black/10 dark:hover:bg-white/10"
+                  aria-label="Cancel editing"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
               </div>
             ) : message.content && (
-              <p className="whitespace-pre-wrap break-words font-medium">
+              <p className="whitespace-pre-wrap break-words font-medium select-text">
                 {message.content}
                 {message.isEdited && (
                   <span className={cn(
-                    'text-[10px] ml-1',
-                    isOwn ? 'text-violet-300' : 'text-slate-400'
+                    'text-[10px] ml-1 opacity-80',
+                    isOwn ? 'text-white/80' : 'text-slate-400'
                   )}>
                     (edited)
                   </span>
@@ -175,12 +179,12 @@ export function MessageBubble({ message, isOwn, onReact, onEdit, onDelete }: Mes
             <div
               className={cn(
                 'flex items-center gap-1 mt-1 text-[11px] font-semibold select-none',
-                isOwn ? 'text-violet-200 justify-end' : 'text-slate-400 justify-end'
+                isOwn ? 'text-white/90 justify-end' : 'text-slate-400 justify-end'
               )}
             >
               <span>{formatMessageTime(message.createdAt)}</span>
               {isOwn && (
-                <CheckCheck className="w-3.5 h-3.5 text-cyan-300 stroke-[2.5]" />
+                <CheckCheck className="w-3.5 h-3.5 text-white stroke-[2.5]" />
               )}
             </div>
           </div>
@@ -197,11 +201,12 @@ export function MessageBubble({ message, isOwn, onReact, onEdit, onDelete }: Mes
                   key={emoji}
                   onClick={() => onReact?.(message._id, emoji)}
                   className={cn(
-                    'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-xs font-bold shadow-xs transition-all hover:scale-110',
+                    'inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs font-bold shadow-xs transition-all hover:scale-110',
                     currentUserId && users.includes(currentUserId)
                       ? 'bg-violet-100 dark:bg-violet-900/50 border-violet-300 dark:border-violet-700'
                       : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700'
                   )}
+                  aria-label={`Reaction ${emoji}`}
                 >
                   <span>{emoji}</span>
                   <span className="text-[10px] text-slate-500">{users.length}</span>
@@ -211,11 +216,12 @@ export function MessageBubble({ message, isOwn, onReact, onEdit, onDelete }: Mes
           )}
         </div>
 
-        {/* Reaction button - appears on hover */}
-        <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* Reaction & Action controls - Always visible on mobile, hover on desktop */}
+        <div className="flex flex-col gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={() => setShowReactions((prev) => !prev)}
             className="p-1.5 text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 rounded-full hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-all"
+            aria-label="Add reaction"
           >
             <Smile className="w-4 h-4" />
           </button>
@@ -223,6 +229,7 @@ export function MessageBubble({ message, isOwn, onReact, onEdit, onDelete }: Mes
             <button
               onClick={() => setShowActions((prev) => !prev)}
               className="p-1.5 text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 rounded-full hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-all"
+              aria-label="More message options"
             >
               <MoreHorizontal className="w-4 h-4" />
             </button>
@@ -246,6 +253,7 @@ export function MessageBubble({ message, isOwn, onReact, onEdit, onDelete }: Mes
                   'text-lg hover:scale-125 transition-transform p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700',
                   userReactedEmojis.includes(emoji) && 'scale-110'
                 )}
+                aria-label={`React with ${emoji}`}
               >
                 {emoji}
               </button>
@@ -284,12 +292,13 @@ export function MessageBubble({ message, isOwn, onReact, onEdit, onDelete }: Mes
           <button
             onClick={() => setLightboxOpen(false)}
             className="absolute top-4 right-4 p-2 text-white/80 hover:text-white rounded-full hover:bg-white/10"
+            aria-label="Close image preview"
           >
             <X className="w-6 h-6" />
           </button>
           <img
             src={message.fileUrl}
-            alt="Full size"
+            alt="Full size preview"
             className="max-w-full max-h-full object-contain rounded-2xl"
             onClick={(e) => e.stopPropagation()}
           />
