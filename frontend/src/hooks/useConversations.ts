@@ -22,7 +22,40 @@ export function useConversations() {
     const socket = getSocket();
     if (!socket) return;
 
-    const handleNewMessage = () => {
+    const handleNewMessage = (message: any) => {
+      if (message?.conversationId) {
+        queryClient.setQueryData<any>(['conversations'], (oldData: any) => {
+          if (!oldData) return oldData;
+          return {
+            ...oldData,
+            pages: oldData.pages.map((page: any) => {
+              const updatedItems = page.items.map((conv: any) => {
+                if (conv._id === message.conversationId) {
+                  return {
+                    ...conv,
+                    lastMessageId: message,
+                    lastMessage: message,
+                    updatedAt: message.createdAt || new Date().toISOString(),
+                  };
+                }
+                return conv;
+              });
+
+              // Re-sort page items so the updated conversation moves to top
+              updatedItems.sort(
+                (a: any, b: any) =>
+                  new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+              );
+
+              return {
+                ...page,
+                items: updatedItems,
+              };
+            }),
+          };
+        });
+      }
+
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
     };
 

@@ -35,6 +35,8 @@ export interface Message {
   mentions: string[];
   starredBy: string[];
   reactions: Record<string, string[]>; // emoji -> userIds[]
+  readBy?: Array<{ userId: string; readAt?: string }>;
+  status?: 'sent' | 'delivered' | 'read';
   createdAt: string;
   updatedAt: string;
 }

@@ -3,6 +3,8 @@ const messageRepository = require("./message.repository");
 const chatRepository = require("../chats/chat.repository");
 const { AppError, StatusCodes } = require("../../common/appError");
 const User = require("../../model/User");
+const Conversation = require("../../model/Conversation");
+const Participant = require("../../model/Participant");
 const blockRepository = require("../users/block.repository");
 
 const sendMessage = async (senderId, payload) => {
@@ -44,6 +46,18 @@ const sendMessage = async (senderId, payload) => {
     replyToMessageId: replyToMessageId || null,
     mentions: mentions || [],
   });
+
+  // Update Conversation with lastMessageId and latest updatedAt
+  await Conversation.findByIdAndUpdate(conversationId, {
+    lastMessageId: message._id,
+    updatedAt: message.createdAt || new Date(),
+  });
+
+  // Increment unreadCount for other participants
+  await Participant.updateMany(
+    { conversationId, userId: { $ne: senderId } },
+    { $inc: { unreadCount: 1 } },
+  );
 
   const sender = await User.findById(senderId).select("username displayName");
 

@@ -73,6 +73,40 @@ const deleteForMe = async (messageId, userId) => {
   );
 };
 
+const markAsReadUpToMessage = async (conversationId, userId, messageId) => {
+  const targetMessage = await Message.findById(messageId);
+  if (!targetMessage) return [];
+
+  const filter = {
+    conversationId,
+    senderId: { $ne: userId },
+    createdAt: { $lte: targetMessage.createdAt },
+    "readBy.userId": { $ne: userId },
+  };
+
+  const update = {
+    $addToSet: {
+      readBy: {
+        userId,
+        readAt: new Date(),
+      },
+    },
+    $set: {
+      status: "read",
+    },
+  };
+
+  await Message.updateMany(filter, update);
+
+  const updatedMessages = await Message.find({
+    conversationId,
+    senderId: { $ne: userId },
+    createdAt: { $lte: targetMessage.createdAt },
+  }).select("_id");
+
+  return updatedMessages.map((m) => m._id.toString());
+};
+
 module.exports = {
   saveMessage,
   findMessageById,
@@ -82,4 +116,5 @@ module.exports = {
   updateContent,
   deleteForEveryone,
   deleteForMe,
+  markAsReadUpToMessage,
 };

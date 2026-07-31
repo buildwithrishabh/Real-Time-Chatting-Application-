@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { CheckCheck, Smile, MoreHorizontal, Pencil, Trash2, FileText, ExternalLink, X, UserX } from 'lucide-react';
+import { Check, CheckCheck, Smile, MoreHorizontal, Pencil, Trash2, FileText, ExternalLink, X, UserX } from 'lucide-react';
 import type { Message } from '../../types/message';
 import { formatMessageTime } from '../../lib/format';
 import { cn } from '../../lib/utils';
@@ -204,7 +204,15 @@ export function MessageBubble({ message, isOwn, onReact, onUnreact, onEdit, onDe
             >
               <span>{formatMessageTime(createdAt)}</span>
               {isOwn && !message.isDeletedForEveryone && (
-                <CheckCheck className="w-3.5 h-3.5 text-white stroke-[2.5]" />
+                <span>
+                  {message.status === 'read' || (message.readBy && message.readBy.length > 0) ? (
+                    <CheckCheck className="w-3.5 h-3.5 text-cyan-300 dark:text-cyan-400 stroke-[2.5]" title="Read / Seen" />
+                  ) : message.status === 'delivered' ? (
+                    <CheckCheck className="w-3.5 h-3.5 text-white/75 stroke-[2.5]" title="Delivered" />
+                  ) : (
+                    <Check className="w-3.5 h-3.5 text-white/75 stroke-[2.5]" title="Sent" />
+                  )}
+                </span>
               )}
             </div>
           </div>

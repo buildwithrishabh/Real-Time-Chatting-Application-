@@ -118,10 +118,53 @@ export function useMessages(conversationId: string | null) {
       );
     };
 
+    const handleReceiptUpdated = (data: {
+      conversationId: string;
+      userId: string;
+      messageId: string;
+      messageIds?: string[];
+      status: 'read' | 'delivered';
+    }) => {
+      if (data.conversationId !== conversationId) return;
+
+      queryClient.setQueryData<InfiniteData<CursorPage<Message>>>(
+        ['messages', conversationId],
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              items: page.items.map((item) => {
+                const isTarget =
+                  item._id === data.messageId ||
+                  (data.messageIds && data.messageIds.includes(item._id));
+                if (isTarget || (data.status === 'read' && item.senderId !== data.userId)) {
+                  const existingReadBy = item.readBy || [];
+                  const alreadyRead = existingReadBy.some(
+                    (r) => (typeof r === 'string' ? r : r.userId) === data.userId
+                  );
+                  return {
+                    ...item,
+                    status: 'read' as const,
+                    readBy: alreadyRead
+                      ? existingReadBy
+                      : [...existingReadBy, { userId: data.userId, readAt: new Date().toISOString() }],
+                  };
+                }
+                return item;
+              }),
+            })),
+          };
+        }
+      );
+    };
+
     socket.on('message:new', handleNewMessage);
     socket.on('message:reaction_update', handleReactionUpdate);
     socket.on('message:edit', handleMessageEdit);
     socket.on('message:delete', handleMessageDelete);
+    socket.on('receipt:updated', handleReceiptUpdated);
 
     return () => {
       socket.emit('room:leave', { conversationId });
@@ -129,6 +172,7 @@ export function useMessages(conversationId: string | null) {
       socket.off('message:reaction_update', handleReactionUpdate);
       socket.off('message:edit', handleMessageEdit);
       socket.off('message:delete', handleMessageDelete);
+      socket.off('receipt:updated', handleReceiptUpdated);
     };
   }, [conversationId, isConnected, queryClient]);
 

@@ -2,6 +2,8 @@ const { notifyUser } = require("../notifications/notification.service");
 const chatRepository = require("./chat.repository");
 const { AppError, StatusCodes } = require("../../common/appError");
 const blockRepository = require("../users/block.repository");
+const Message = require("../../model/Message");
+const Conversation = require("../../model/Conversation");
 
 const createChat = async (creatorId, payload) => {
   const { type, name } = payload;
@@ -176,8 +178,36 @@ const getConversations = async (userId, cursor, limit = 15) => {
     conversations.map(async (conv) => {
       const convObj = conv.toObject ? conv.toObject() : conv;
       const participants = await chatRepository.getParticipants(conv._id);
+
+      let lastMessage = convObj.lastMessageId;
+
+      // If lastMessage is missing or not an object, query the actual latest message from DB
+      if (
+        !lastMessage ||
+        typeof lastMessage !== "object" ||
+        (!lastMessage.content && !lastMessage.fileId && !lastMessage._id)
+      ) {
+        const latestMsg = await Message.findOne({
+          conversationId: conv._id,
+          deletedByUsers: { $ne: userId },
+        })
+          .sort({ createdAt: -1 })
+          .populate("fileId");
+
+        if (latestMsg) {
+          lastMessage = latestMsg;
+          // Heal database record asynchronously
+          Conversation.findByIdAndUpdate(conv._id, {
+            lastMessageId: latestMsg._id,
+            updatedAt: latestMsg.createdAt,
+          }).catch(() => {});
+        }
+      }
+
       return {
         ...convObj,
+        lastMessageId: lastMessage,
+        lastMessage: lastMessage,
         participants,
       };
     }),

@@ -24,6 +24,7 @@ export interface AppNotification {
   isRead: boolean;
   readAt?: string | null;
   metadata?: Record<string, unknown>;
+  activeInRoom?: boolean;
   createdAt: string;
   updatedAt: string;
 }

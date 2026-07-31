@@ -24,6 +24,27 @@ const notifyUser = async ({
   messageId,
   metadata,
 }) => {
+  const io = getIOInstance();
+  let isParticipantActiveInRoom = false;
+
+  if (io && chatId) {
+    const roomName = `chat:room:${chatId}`;
+    const roomSockets = io.sockets.adapter.rooms?.get(roomName);
+    if (roomSockets) {
+      for (const socketId of roomSockets) {
+        const socket = io.sockets.sockets?.get(socketId);
+        if (
+          socket &&
+          socket.user &&
+          socket.user.id?.toString() === recipientId?.toString()
+        ) {
+          isParticipantActiveInRoom = true;
+          break;
+        }
+      }
+    }
+  }
+
   const notification = await notificationRepository.create({
     recipient: recipientId,
     sender: senderId,
@@ -33,16 +54,21 @@ const notifyUser = async ({
     chatId,
     messageId,
     metadata,
+    isRead: isParticipantActiveInRoom,
   });
 
   const presenceStatus = await redis.get(`presence:status:${recipientId}`);
   const isOnline = presenceStatus === "online";
 
-  const io = getIOInstance();
-
   if (isOnline && io) {
-    io.to(`user:${recipientId}`).emit("notification:received", notification);
-  } else {
+    const notifObj = notification.toObject
+      ? notification.toObject()
+      : notification;
+    io.to(`user:${recipientId}`).emit("notification:received", {
+      ...notifObj,
+      activeInRoom: isParticipantActiveInRoom,
+    });
+  } else if (!isParticipantActiveInRoom) {
     await sendNotificationJob(recipientId, {
       notificationId: notification._id,
       title,

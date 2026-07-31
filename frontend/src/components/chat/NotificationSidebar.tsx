@@ -57,9 +57,18 @@ export function NotificationSidebar() {
 
     const handleNewNotification = (newNotif: AppNotification) => {
       setNotifications((prev) => [newNotif, ...prev]);
-      toast.info(newNotif.title, {
-        description: newNotif.body,
-      });
+
+      const currentActiveId = useChatStore.getState().activeConversationId;
+      const isCurrentChatOpen = Boolean(
+        (newNotif.chatId && currentActiveId === newNotif.chatId) || newNotif.activeInRoom
+      );
+
+      // Do not display popup toast notification if the recipient has that chat currently open
+      if (!isCurrentChatOpen) {
+        toast.info(newNotif.title, {
+          description: newNotif.body,
+        });
+      }
     };
 
     socket.on('notification:received', handleNewNotification);
