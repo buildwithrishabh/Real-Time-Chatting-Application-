@@ -11,7 +11,7 @@ const router = express.Router();
 const completeProfileSchema = z.object({
   body: z.object({
     displayName: z.string().min(2).max(50).optional(),
-    bio: z.string().max(500).optional(),
+    bio: z.string().max(50).optional(),
     avatarUrl: z.string().url().optional().or(z.literal("")),
     avatarPublicId: z.string().optional(),
   }),
@@ -20,7 +20,7 @@ const completeProfileSchema = z.object({
 const updateProfileSchema = z.object({
   body: z.object({
     displayName: z.string().min(2).max(50).optional(),
-    bio: z.string().max(500).optional(),
+    bio: z.string().max(50).optional(),
     avatarUrl: z.string().url().optional().or(z.literal("")),
     avatarPublicId: z.string().optional(),
     privacySettings: z

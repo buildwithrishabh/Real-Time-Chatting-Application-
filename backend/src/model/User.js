@@ -37,7 +37,7 @@ const UserSchema = new mongoose.Schema(
     displayName: { type: String, trim: true, default: "" },
     avatarUrl: { type: String, default: "" },
     avatarPublicId: { type: String, default: "" },
-    bio: { type: String, default: "", maxlength: 500 },
+    bio: { type: String, default: "", maxlength: 50 },
     isProfileComplete: { type: Boolean, default: false },
     isEmailVerified: { type: Boolean, default: false },
     emailVerificationToken: { type: String, select: false },

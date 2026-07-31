@@ -367,11 +367,11 @@ export function ProfileSettingsModal() {
                     value={bio}
                     onChange={(e) => setBio(e.target.value)}
                     rows={3}
-                    maxLength={500}
+                    maxLength={50}
                     placeholder="Tell others about yourself..."
                     className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 rounded-2xl text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/20 resize-none font-medium"
                   />
-                  <p className="text-[10px] text-slate-400 mt-1 text-right font-medium">{bio.length}/500</p>
+                  <p className="text-[10px] text-slate-400 mt-1 text-right font-medium">{bio.length}/50</p>
                 </div>
 
                 <div className="flex justify-end pt-1">
