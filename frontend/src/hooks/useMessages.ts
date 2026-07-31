@@ -54,11 +54,81 @@ export function useMessages(conversationId: string | null) {
       );
     };
 
+    const handleReactionUpdate = (data: { conversationId: string; messageId: string; reactions: Record<string, string[]> }) => {
+      if (data.conversationId !== conversationId) return;
+
+      queryClient.setQueryData<InfiniteData<CursorPage<Message>>>(
+        ['messages', conversationId],
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              items: page.items.map((item) =>
+                item._id === data.messageId ? { ...item, reactions: data.reactions } : item
+              ),
+            })),
+          };
+        }
+      );
+    };
+
+    const handleMessageEdit = (data: { conversationId: string; messageId: string; content: string; isEdited: boolean }) => {
+      if (data.conversationId !== conversationId) return;
+
+      queryClient.setQueryData<InfiniteData<CursorPage<Message>>>(
+        ['messages', conversationId],
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              items: page.items.map((item) =>
+                item._id === data.messageId ? { ...item, content: data.content, isEdited: true } : item
+              ),
+            })),
+          };
+        }
+      );
+    };
+
+    const handleMessageDelete = (data: { conversationId: string; messageId: string; type: string }) => {
+      if (data.conversationId !== conversationId) return;
+
+      queryClient.setQueryData<InfiniteData<CursorPage<Message>>>(
+        ['messages', conversationId],
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              items: page.items.map((item) =>
+                item._id === data.messageId
+                  ? data.type === 'everyone'
+                    ? { ...item, isDeletedForEveryone: true, content: '' }
+                    : item
+                  : item
+              ),
+            })),
+          };
+        }
+      );
+    };
+
     socket.on('message:new', handleNewMessage);
+    socket.on('message:reaction_update', handleReactionUpdate);
+    socket.on('message:edit', handleMessageEdit);
+    socket.on('message:delete', handleMessageDelete);
 
     return () => {
       socket.emit('room:leave', { conversationId });
       socket.off('message:new', handleNewMessage);
+      socket.off('message:reaction_update', handleReactionUpdate);
+      socket.off('message:edit', handleMessageEdit);
+      socket.off('message:delete', handleMessageDelete);
     };
   }, [conversationId, isConnected, queryClient]);
 

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { CheckCheck, Smile, MoreHorizontal, Pencil, Trash2, FileText, ExternalLink, X } from 'lucide-react';
+import { CheckCheck, Smile, MoreHorizontal, Pencil, Trash2, FileText, ExternalLink, X, UserX } from 'lucide-react';
 import type { Message } from '../../types/message';
 import { formatMessageTime } from '../../lib/format';
 import { cn } from '../../lib/utils';
@@ -9,13 +9,14 @@ interface MessageBubbleProps {
   message: Message;
   isOwn: boolean;
   onReact?: (messageId: string, emoji: string) => void;
+  onUnreact?: (messageId: string, emoji: string) => void;
   onEdit?: (messageId: string, content: string) => void;
-  onDelete?: (messageId: string) => void;
+  onDelete?: (messageId: string, mode: 'me' | 'everyone') => void;
 }
 
 const QUICK_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
 
-export function MessageBubble({ message, isOwn, onReact, onEdit, onDelete }: MessageBubbleProps) {
+export function MessageBubble({ message, isOwn, onReact, onUnreact, onEdit, onDelete }: MessageBubbleProps) {
   const [showReactions, setShowReactions] = useState(false);
   const [showActions, setShowActions] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -54,8 +55,13 @@ export function MessageBubble({ message, isOwn, onReact, onEdit, onDelete }: Mes
     }
   }, [isEditing, editText.length]);
 
-  const handleReact = (emoji: string) => {
-    onReact?.(message._id, emoji);
+  const handleReactToggle = (emoji: string) => {
+    const isReacted = userReactedEmojis.includes(emoji);
+    if (isReacted) {
+      onUnreact?.(message._id, emoji);
+    } else {
+      onReact?.(message._id, emoji);
+    }
     setShowReactions(false);
   };
 
@@ -72,9 +78,14 @@ export function MessageBubble({ message, isOwn, onReact, onEdit, onDelete }: Mes
     setIsEditing(false);
   };
 
-  const handleDelete = () => {
+  const handleDeleteForMe = () => {
     setShowActions(false);
-    onDelete?.(message._id);
+    onDelete?.(message._id, 'me');
+  };
+
+  const handleDeleteForEveryone = () => {
+    setShowActions(false);
+    onDelete?.(message._id, 'everyone');
   };
 
   const handleEditKeyDown = (e: React.KeyboardEvent) => {
@@ -167,7 +178,11 @@ export function MessageBubble({ message, isOwn, onReact, onEdit, onDelete }: Mes
                   <X className="w-3.5 h-3.5" />
                 </button>
               </div>
-            ) : message.content && (
+            ) : message.isDeletedForEveryone ? (
+              <p className="italic text-xs text-slate-400 font-medium">
+                This message was deleted
+              </p>
+            ) : message.content ? (
               <p className="whitespace-pre-wrap break-words font-medium select-text">
                 {message.content}
                 {message.isEdited && (
@@ -179,7 +194,7 @@ export function MessageBubble({ message, isOwn, onReact, onEdit, onDelete }: Mes
                   </span>
                 )}
               </p>
-            )}
+            ) : null}
 
             <div
               className={cn(
@@ -188,49 +203,52 @@ export function MessageBubble({ message, isOwn, onReact, onEdit, onDelete }: Mes
               )}
             >
               <span>{formatMessageTime(createdAt)}</span>
-              {isOwn && (
+              {isOwn && !message.isDeletedForEveryone && (
                 <CheckCheck className="w-3.5 h-3.5 text-white stroke-[2.5]" />
               )}
             </div>
           </div>
 
-          {reactionsList.length > 0 && (
+          {reactionsList.length > 0 && !message.isDeletedForEveryone && (
             <div
               className={cn(
                 'flex items-center gap-1 mt-1',
                 isOwn ? 'justify-end' : 'justify-start'
               )}
             >
-              {reactionsList.map(([emoji, users]) => (
-                <button
-                  key={emoji}
-                  onClick={() => onReact?.(message._id, emoji)}
-                  className={cn(
-                    'inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs font-bold shadow-xs transition-all hover:scale-110',
-                    currentUserId && users.includes(currentUserId)
-                      ? 'bg-violet-100 dark:bg-violet-900/50 border-violet-300 dark:border-violet-700'
-                      : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700'
-                  )}
-                  aria-label={`Reaction ${emoji}`}
-                >
-                  <span>{emoji}</span>
-                  <span className="text-[10px] text-slate-500">{users.length}</span>
-                </button>
-              ))}
+              {reactionsList.map(([emoji, users]) => {
+                const isMine = currentUserId && users.includes(currentUserId);
+                return (
+                  <button
+                    key={emoji}
+                    onClick={() => handleReactToggle(emoji)}
+                    className={cn(
+                      'inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs font-bold shadow-xs transition-all hover:scale-110',
+                      isMine
+                        ? 'bg-violet-100 dark:bg-violet-900/50 border-violet-300 dark:border-violet-700 text-violet-700 dark:text-violet-300'
+                        : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700'
+                    )}
+                    aria-label={`Reaction ${emoji}`}
+                  >
+                    <span>{emoji}</span>
+                    <span className="text-[10px] text-slate-500">{users.length}</span>
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
 
-        {/* Reaction & Action controls - Always visible on mobile, hover on desktop */}
-        <div className="flex flex-col gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
-          <button
-            onClick={() => setShowReactions((prev) => !prev)}
-            className="p-1.5 text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 rounded-full hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-all"
-            aria-label="Add reaction"
-          >
-            <Smile className="w-4 h-4" />
-          </button>
-          {isOwn && (
+        {/* Reaction & Action controls */}
+        {!message.isDeletedForEveryone && (
+          <div className="flex flex-col gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              onClick={() => setShowReactions((prev) => !prev)}
+              className="p-1.5 text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 rounded-full hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-all"
+              aria-label="Add reaction"
+            >
+              <Smile className="w-4 h-4" />
+            </button>
             <button
               onClick={() => setShowActions((prev) => !prev)}
               className="p-1.5 text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 rounded-full hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-all"
@@ -238,8 +256,8 @@ export function MessageBubble({ message, isOwn, onReact, onEdit, onDelete }: Mes
             >
               <MoreHorizontal className="w-4 h-4" />
             </button>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Reaction picker popup */}
         {showReactions && (
@@ -253,10 +271,10 @@ export function MessageBubble({ message, isOwn, onReact, onEdit, onDelete }: Mes
             {QUICK_EMOJIS.map((emoji) => (
               <button
                 key={emoji}
-                onClick={() => handleReact(emoji)}
+                onClick={() => handleReactToggle(emoji)}
                 className={cn(
                   'text-lg hover:scale-125 transition-transform p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700',
-                  userReactedEmojis.includes(emoji) && 'scale-110'
+                  userReactedEmojis.includes(emoji) && 'scale-110 bg-violet-100 dark:bg-violet-900/50'
                 )}
                 aria-label={`React with ${emoji}`}
               >
@@ -270,20 +288,33 @@ export function MessageBubble({ message, isOwn, onReact, onEdit, onDelete }: Mes
         {showActions && (
           <div
             ref={actionsRef}
-            className="absolute bottom-full mb-2 right-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl z-50 py-1.5 min-w-[140px] animate-scale-in"
+            className={cn(
+              'absolute bottom-full mb-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl z-50 py-1.5 min-w-[150px] animate-scale-in',
+              isOwn ? 'right-0' : 'left-0'
+            )}
           >
+            {isOwn && message.content && (
+              <button
+                onClick={handleEdit}
+                className="w-full px-4 py-2.5 text-left text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-violet-50 dark:hover:bg-violet-950/40 flex items-center gap-2 transition-colors"
+              >
+                <Pencil className="w-3.5 h-3.5 text-violet-500" /> Edit
+              </button>
+            )}
             <button
-              onClick={handleEdit}
-              className="w-full px-4 py-2.5 text-left text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-violet-50 dark:hover:bg-violet-950/40 flex items-center gap-2 transition-colors"
+              onClick={handleDeleteForMe}
+              className="w-full px-4 py-2.5 text-left text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2 transition-colors"
             >
-              <Pencil className="w-4 h-4 text-violet-500" /> Edit
+              <UserX className="w-3.5 h-3.5 text-slate-400" /> Delete for Me
             </button>
-            <button
-              onClick={handleDelete}
-              className="w-full px-4 py-2.5 text-left text-sm font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center gap-2 transition-colors"
-            >
-              <Trash2 className="w-4 h-4" /> Delete
-            </button>
+            {isOwn && (
+              <button
+                onClick={handleDeleteForEveryone}
+                className="w-full px-4 py-2.5 text-left text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center gap-2 transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Delete for Everyone
+              </button>
+            )}
           </div>
         )}
       </div>

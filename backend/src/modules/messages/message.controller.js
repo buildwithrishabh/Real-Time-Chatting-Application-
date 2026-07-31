@@ -56,6 +56,19 @@ const react = async (req, res, next) => {
       id,
       emoji,
     );
+
+    try {
+      const { getIO } = require("../../socket");
+      const io = getIO();
+      if (io && updatedMessage?.conversationId) {
+        io.to(`chat:room:${updatedMessage.conversationId}`).emit("message:reaction_update", {
+          conversationId: updatedMessage.conversationId.toString(),
+          messageId: id,
+          reactions: updatedMessage.reactions,
+        });
+      }
+    } catch (e) {}
+
     res.status(200).json({ success: true, data: updatedMessage });
   } catch (err) {
     next(err);
@@ -71,6 +84,19 @@ const unreact = async (req, res, next) => {
       id,
       emoji,
     );
+
+    try {
+      const { getIO } = require("../../socket");
+      const io = getIO();
+      if (io && updatedMessage?.conversationId) {
+        io.to(`chat:room:${updatedMessage.conversationId}`).emit("message:reaction_update", {
+          conversationId: updatedMessage.conversationId.toString(),
+          messageId: id,
+          reactions: updatedMessage.reactions,
+        });
+      }
+    } catch (e) {}
+
     res.status(200).json({ success: true, data: updatedMessage });
   } catch (err) {
     next(err);
@@ -86,6 +112,20 @@ const edit = async (req, res, next) => {
       req.user.id,
       content,
     );
+
+    try {
+      const { getIO } = require("../../socket");
+      const io = getIO();
+      if (io && updatedMessage?.conversationId) {
+        io.to(`chat:room:${updatedMessage.conversationId}`).emit("message:edit", {
+          conversationId: updatedMessage.conversationId.toString(),
+          messageId: id,
+          content: updatedMessage.content,
+          isEdited: true,
+        });
+      }
+    } catch (e) {}
+
     res.status(200).json({ success: true, data: updatedMessage });
   } catch (err) {
     next(err);
@@ -97,6 +137,22 @@ const deleteMsg = async (req, res, next) => {
     const { id } = req.params;
     const { type } = req.body;
     const result = await messageService.deleteMessage(req.user.id, id, type);
+
+    try {
+      const { getIO } = require("../../socket");
+      const io = getIO();
+      if (io && result) {
+        const conversationId = result.conversationId ? result.conversationId.toString() : null;
+        if (conversationId && type === "everyone") {
+          io.to(`chat:room:${conversationId}`).emit("message:delete", {
+            conversationId,
+            messageId: id,
+            type: "everyone",
+          });
+        }
+      }
+    } catch (e) {}
+
     res.status(200).json({ success: true, data: result });
   } catch (err) {
     next(err);

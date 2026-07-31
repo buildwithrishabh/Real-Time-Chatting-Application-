@@ -30,5 +30,19 @@ export const usersApi = {
     const data = res.data.data;
     return 'user' in data ? (data as { user: User }).user : (data as User);
   },
-};
 
+  blockUser: async (userId: string) => {
+    const res = await client.post<ApiSuccess<unknown>>(`/users/${userId}/block`);
+    return res.data;
+  },
+
+  unblockUser: async (userId: string) => {
+    const res = await client.delete<ApiSuccess<unknown>>(`/users/${userId}/block`);
+    return res.data;
+  },
+
+  listBlocked: async () => {
+    const res = await client.get<ApiSuccess<User[]>>('/users/blocked');
+    return res.data.data;
+  },
+};

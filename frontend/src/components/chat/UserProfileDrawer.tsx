@@ -15,6 +15,7 @@ import type { Message } from '../../types/message';
 import { useUIStore } from '../../store/ui.store';
 import { usePresenceStore } from '../../store/presence.store';
 import { useAuthStore } from '../../store/auth.store';
+import { usersApi } from '../../api/users.api';
 import { formatConversationDate } from '../../lib/format';
 import { toast } from 'sonner';
 import { cn } from '../../lib/utils';
@@ -34,6 +35,7 @@ export function UserProfileDrawer({ activeConversation, messages }: UserProfileD
   const [activeTab, setActiveTab] = useState<TabType>('media');
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const [isMuted, setIsMuted] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -55,6 +57,32 @@ export function UserProfileDrawer({ activeConversation, messages }: UserProfileD
 
   const otherUserObj = (otherParticipant?.userId && typeof otherParticipant.userId === 'object') ? otherParticipant.userId : null;
   const otherUserId = (typeof otherParticipant?.userId === 'string' ? otherParticipant.userId : otherUserObj?._id || (otherUserObj as any)?.id)?.toString();
+
+  useEffect(() => {
+    if (otherUserId) {
+      usersApi.listBlocked().then((blockedList) => {
+        const isUserBlocked = (blockedList || []).some((u) => u._id === otherUserId || (u as any).id === otherUserId);
+        setIsBlocked(isUserBlocked);
+      }).catch(() => {});
+    }
+  }, [otherUserId]);
+
+  const handleToggleBlock = async () => {
+    if (!otherUserId) return;
+    try {
+      if (isBlocked) {
+        await usersApi.unblockUser(otherUserId);
+        setIsBlocked(false);
+        toast.success('Contact unblocked successfully');
+      } else {
+        await usersApi.blockUser(otherUserId);
+        setIsBlocked(true);
+        toast.success('Contact blocked');
+      }
+    } catch {
+      toast.error('Failed to update block status');
+    }
+  };
 
   const isGroup = activeConversation.type === 'group';
   const title = isGroup
@@ -208,11 +236,16 @@ export function UserProfileDrawer({ activeConversation, messages }: UserProfileD
             </button>
 
             <button
-              onClick={() => toast.info('Block feature requested')}
-              className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-600 text-xs font-bold hover:bg-rose-100 dark:hover:bg-rose-950/60 transition-all"
+              onClick={handleToggleBlock}
+              className={cn(
+                'flex items-center justify-center gap-2 p-3 rounded-2xl border text-xs font-bold transition-all',
+                isBlocked
+                  ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300'
+                  : 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/60 text-rose-600 hover:bg-rose-100 dark:hover:bg-rose-950/60'
+              )}
             >
               <ShieldAlert className="w-4 h-4" />
-              <span>Block Contact</span>
+              <span>{isBlocked ? 'Unblock Contact' : 'Block Contact'}</span>
             </button>
           </div>
 

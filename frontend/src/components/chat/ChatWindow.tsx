@@ -82,6 +82,15 @@ export function ChatWindow({ activeConversation }: ChatWindowProps) {
     }
   };
 
+  const handleUnreact = async (messageId: string, emoji: string) => {
+    try {
+      await messagesApi.unreact(messageId, emoji);
+      await queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
+    } catch {
+      toast.error('Could not remove reaction');
+    }
+  };
+
   const handleEdit = async (messageId: string, content: string) => {
     try {
       await messagesApi.edit(messageId, content);
@@ -92,11 +101,11 @@ export function ChatWindow({ activeConversation }: ChatWindowProps) {
     }
   };
 
-  const handleDelete = async (messageId: string) => {
+  const handleDelete = async (messageId: string, mode: 'me' | 'everyone' = 'everyone') => {
     try {
-      await messagesApi.delete(messageId, 'everyone');
+      await messagesApi.delete(messageId, mode);
       await queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
-      toast.success('Message deleted');
+      toast.success(mode === 'me' ? 'Message removed for you' : 'Message deleted for everyone');
     } catch {
       toast.error('Could not delete message');
     }
@@ -229,6 +238,7 @@ export function ChatWindow({ activeConversation }: ChatWindowProps) {
         isTyping={typingUsers.length > 0}
         typingUserName={typingUserName}
         onReact={handleReact}
+        onUnreact={handleUnreact}
         onEdit={handleEdit}
         onDelete={handleDelete}
         fetchNextPage={fetchNextPage}

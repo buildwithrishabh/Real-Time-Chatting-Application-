@@ -27,4 +27,9 @@ export const messagesApi = {
     const res = await client.post<ApiSuccess<Message>>(`/messages/${messageId}/react`, { emoji });
     return res.data.data;
   },
+
+  unreact: async (messageId: string, emoji: string) => {
+    const res = await client.delete<ApiSuccess<Message>>(`/messages/${messageId}/react`, { data: { emoji } });
+    return res.data.data;
+  },
 };

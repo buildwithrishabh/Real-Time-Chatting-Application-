@@ -10,8 +10,9 @@ interface MessageListProps {
   isTyping?: boolean;
   typingUserName?: string | null;
   onReact?: (messageId: string, emoji: string) => void;
+  onUnreact?: (messageId: string, emoji: string) => void;
   onEdit?: (messageId: string, content: string) => void;
-  onDelete?: (messageId: string) => void;
+  onDelete?: (messageId: string, mode: 'me' | 'everyone') => void;
   fetchNextPage?: () => void;
   hasNextPage?: boolean;
   isFetchingNextPage?: boolean;
@@ -36,6 +37,7 @@ export function MessageList({
   isTyping,
   typingUserName,
   onReact,
+  onUnreact,
   onEdit,
   onDelete,
   fetchNextPage,
@@ -150,6 +152,7 @@ export function MessageList({
                 message={message}
                 isOwn={isOwn}
                 onReact={onReact}
+                onUnreact={onUnreact}
                 onEdit={onEdit}
                 onDelete={onDelete}
               />
