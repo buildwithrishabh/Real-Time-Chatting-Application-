@@ -45,11 +45,12 @@ export function ChatWindow({ activeConversation }: ChatWindowProps) {
   );
 
   const otherParticipant = activeConversation?.participants?.find((p) => {
-    const pId = (typeof p.userId === 'string' ? p.userId : (p.userId?._id || (p.userId as any)?.id))?.toString();
+    if (!p?.userId) return false;
+    const pId = (typeof p.userId === 'string' ? p.userId : (p.userId._id || (p.userId as any)?.id))?.toString();
     return pId && currentUserId ? pId !== currentUserId : true;
   }) || activeConversation?.participants?.[0];
 
-  const otherUserObj = typeof otherParticipant?.userId === 'object' ? otherParticipant.userId : null;
+  const otherUserObj = (otherParticipant?.userId && typeof otherParticipant.userId === 'object') ? otherParticipant.userId : null;
   const otherUserId = (typeof otherParticipant?.userId === 'string' ? otherParticipant.userId : otherUserObj?._id || (otherUserObj as any)?.id)?.toString();
 
   const headerTitle = activeConversation?.type === 'group'

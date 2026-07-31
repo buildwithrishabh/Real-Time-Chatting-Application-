@@ -48,11 +48,12 @@ export function UserProfileDrawer({ activeConversation, messages }: UserProfileD
   if (!isUserProfileDrawerOpen || !activeConversation) return null;
 
   const otherParticipant = activeConversation.participants?.find((p) => {
-    const pId = (typeof p.userId === 'string' ? p.userId : (p.userId?._id || (p.userId as any)?.id))?.toString();
+    if (!p?.userId) return false;
+    const pId = (typeof p.userId === 'string' ? p.userId : (p.userId._id || (p.userId as any)?.id))?.toString();
     return pId && currentUserId ? pId !== currentUserId : true;
   }) || activeConversation.participants?.[0];
 
-  const otherUserObj = typeof otherParticipant?.userId === 'object' ? otherParticipant.userId : null;
+  const otherUserObj = (otherParticipant?.userId && typeof otherParticipant.userId === 'object') ? otherParticipant.userId : null;
   const otherUserId = (typeof otherParticipant?.userId === 'string' ? otherParticipant.userId : otherUserObj?._id || (otherUserObj as any)?.id)?.toString();
 
   const isGroup = activeConversation.type === 'group';
@@ -67,24 +68,24 @@ export function UserProfileDrawer({ activeConversation, messages }: UserProfileD
   const isOnline = otherUserId ? onlineUsers[otherUserId] === 'online' : false;
 
   // Filter Shared Media (Images / Videos)
-  const sharedMedia = messages.filter(
-    (m) => m.fileUrl && (m.type === 'image' || m.type === 'video' || m.fileUrl.match(/\.(jpg|jpeg|png|webp|gif|mp4|mov)$/i))
+  const sharedMedia = (messages || []).filter(
+    (m) => m?.fileUrl && typeof m.fileUrl === 'string' && (m.type === 'image' || m.type === 'video' || m.fileUrl.match(/\.(jpg|jpeg|png|webp|gif|mp4|mov)$/i))
   );
 
   // Filter Shared Docs & Files (PDFs, Zip, Documents, Audio)
-  const sharedDocs = messages.filter(
-    (m) => m.fileUrl && !m.fileUrl.match(/\.(jpg|jpeg|png|webp|gif|mp4|mov)$/i)
+  const sharedDocs = (messages || []).filter(
+    (m) => m?.fileUrl && typeof m.fileUrl === 'string' && !m.fileUrl.match(/\.(jpg|jpeg|png|webp|gif|mp4|mov)$/i)
   );
 
   // Filter Shared Web Links
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   const sharedLinks: { url: string; date: string; senderName?: string }[] = [];
-  messages.forEach((m) => {
-    if (m.content) {
+  (messages || []).forEach((m) => {
+    if (m?.content) {
       const matches = m.content.match(urlRegex);
       if (matches) {
         matches.forEach((url) => {
-          const senderName = typeof m.senderId === 'object' ? (m.senderId as any)?.displayName || (m.senderId as any)?.username : 'Sender';
+          const senderName = (m.senderId && typeof m.senderId === 'object') ? (m.senderId as any)?.displayName || (m.senderId as any)?.username || 'Sender' : 'Sender';
           sharedLinks.push({
             url,
             date: m.createdAt,

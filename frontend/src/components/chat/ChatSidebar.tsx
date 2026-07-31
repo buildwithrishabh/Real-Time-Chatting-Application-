@@ -22,18 +22,19 @@ export function ChatSidebar({ conversations, isLoading }: ChatSidebarProps) {
   const { activeConversationId, setActiveConversation } = useChatStore();
   const isConnected = useSocketStore((s) => s.isConnected);
   const { setNewChatOpen, setMobileDrawerOpen } = useUIStore();
-  const currentUserId = useAuthStore((s) => s.user?._id);
+  const currentUserId = useAuthStore((s) => s.user?._id || (s.user as any)?.id);
 
   const filteredConversations = conversations.filter((conv) => {
     const participantNames = conv.participants
-      ?.map((p) => (typeof p.userId === 'object' ? `${p.userId.displayName || ''} ${p.userId.username || ''}` : ''))
+      ?.map((p) => (p?.userId && typeof p.userId === 'object' ? `${p.userId.displayName || ''} ${p.userId.username || ''}` : ''))
       .join(' ');
     const title = `${conv.name || ''} ${participantNames || ''}`;
     const matchesSearch = title.toLowerCase().includes(searchQuery.toLowerCase());
     if (!matchesSearch) return false;
     if (filterTab === 'unread') {
       const myParticipant = conv.participants?.find((p) => {
-        const pId = typeof p.userId === 'string' ? p.userId : p.userId._id;
+        if (!p?.userId) return false;
+        const pId = typeof p.userId === 'string' ? p.userId : p.userId._id || (p.userId as any)?.id;
         return pId === currentUserId;
       });
       return (myParticipant?.unreadCount || 0) > 0;
