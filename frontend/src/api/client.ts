@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { toast } from 'sonner';
 import { useAuthStore } from '../store/auth.store';
+import { updateSocketAuthToken } from '../socket/client';
 import { API_URL } from '../lib/constants';
 
 const client = axios.create({
@@ -62,6 +63,7 @@ client.interceptors.response.use(
         );
         const { accessToken, user, isProfileComplete } = data.data;
         useAuthStore.getState().setAuth(accessToken, user, isProfileComplete);
+        updateSocketAuthToken(accessToken);
 
         processQueue(null, accessToken);
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;

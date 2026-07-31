@@ -7,18 +7,25 @@ import type { CursorPage } from '../types/api';
 import { messagesApi } from '../api/messages.api';
 import { toast } from 'sonner';
 
+interface SendMessagePayload {
+  content?: string;
+  fileId?: string;
+  replyToMessageId?: string;
+  tempId?: string;
+}
+
 export function useSendMessage(conversationId: string | null) {
   const queryClient = useQueryClient();
   const user = useAuthStore((s) => s.user);
 
   return useMutation({
-    mutationFn: async (payload: { content?: string; fileId?: string; replyToMessageId?: string }) => {
+    mutationFn: async (payload: SendMessagePayload) => {
       if (!conversationId) throw new Error('No active conversation');
 
       const socket = getSocket();
       if (socket?.connected) {
         return new Promise<Message>((resolve, reject) => {
-          const tempId = `temp-${crypto.randomUUID()}`;
+          const tempId = payload.tempId || `temp-${crypto.randomUUID()}`;
           socket.emit(
             'message:send',
             { conversationId, tempId, ...payload },
@@ -45,8 +52,12 @@ export function useSendMessage(conversationId: string | null) {
         conversationId,
       ]);
 
+      const tempId = payload.tempId || `temp-${crypto.randomUUID()}`;
+      payload.tempId = tempId;
+
       const tempMessage: Message = {
-        _id: `temp-${crypto.randomUUID()}`,
+        _id: tempId,
+        tempId,
         conversationId,
         senderId: user._id,
         content: payload.content || '',
@@ -67,7 +78,12 @@ export function useSendMessage(conversationId: string | null) {
       queryClient.setQueryData<InfiniteData<CursorPage<Message>>>(
         ['messages', conversationId],
         (old) => {
-          if (!old) return old;
+          if (!old?.pages?.length) {
+            return {
+              pages: [{ items: [tempMessage], nextCursor: null, hasMore: false }],
+              pageParams: [undefined],
+            };
+          }
           const [firstPage, ...rest] = old.pages;
           return {
             ...old,
@@ -79,7 +95,7 @@ export function useSendMessage(conversationId: string | null) {
         }
       );
 
-      return { previous };
+      return { previous, tempId };
     },
 
     onError: (err, _payload, context) => {
@@ -87,6 +103,25 @@ export function useSendMessage(conversationId: string | null) {
         queryClient.setQueryData(['messages', conversationId], context.previous);
       }
       toast.error(err instanceof Error ? err.message : 'Failed to send message. Please try again.');
+    },
+
+    onSuccess: (savedMessage, _payload, context) => {
+      if (!conversationId || !context?.tempId) return;
+      queryClient.setQueryData<InfiniteData<CursorPage<Message>>>(
+        ['messages', conversationId],
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              items: page.items.map((item) =>
+                item._id === context.tempId || item.tempId === context.tempId ? savedMessage : item
+              ),
+            })),
+          };
+        }
+      );
     },
 
     onSettled: () => {

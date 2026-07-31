@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Search, Phone, Video, MoreVertical, ArrowLeft, Info } from 'lucide-react';
 import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
@@ -15,12 +16,14 @@ import { useAuthStore } from '../../store/auth.store';
 import { formatConversationDate } from '../../lib/format';
 import { toast } from 'sonner';
 import { cn } from '../../lib/utils';
+import { getSocket } from '../../socket/client';
 
 interface ChatWindowProps {
   activeConversation: Conversation | null;
 }
 
 export function ChatWindow({ activeConversation }: ChatWindowProps) {
+  const queryClient = useQueryClient();
   const setActiveConversation = useChatStore((s) => s.setActiveConversation);
   const setUserProfileDrawerOpen = useUIStore((s) => s.setUserProfileDrawerOpen);
   const conversationId = activeConversation?._id;
@@ -32,10 +35,14 @@ export function ChatWindow({ activeConversation }: ChatWindowProps) {
 
   const [searchActive, setSearchActive] = useState(false);
 
-  const realMessages = (messagesData?.pages || [])
-    .slice()
-    .reverse()
-    .flatMap((page) => page.items.slice().reverse());
+  const realMessages = useMemo(
+    () =>
+      (messagesData?.pages || [])
+        .slice()
+        .reverse()
+        .flatMap((page) => page.items.slice().reverse()),
+    [messagesData?.pages]
+  );
 
   const otherParticipant = activeConversation?.participants?.find((p) => {
     const pId = (typeof p.userId === 'string' ? p.userId : (p.userId?._id || (p.userId as any)?.id))?.toString();
@@ -68,10 +75,39 @@ export function ChatWindow({ activeConversation }: ChatWindowProps) {
   const handleReact = async (messageId: string, emoji: string) => {
     try {
       await messagesApi.react(messageId, emoji);
+      await queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
     } catch {
-      // silently fail
+      toast.error('Could not update reaction');
     }
   };
+
+  const handleEdit = async (messageId: string, content: string) => {
+    try {
+      await messagesApi.edit(messageId, content);
+      await queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
+      toast.success('Message updated');
+    } catch {
+      toast.error('Could not edit message');
+    }
+  };
+
+  const handleDelete = async (messageId: string) => {
+    try {
+      await messagesApi.delete(messageId, 'everyone');
+      await queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
+      toast.success('Message deleted');
+    } catch {
+      toast.error('Could not delete message');
+    }
+  };
+
+  useEffect(() => {
+    const lastMessage = realMessages[realMessages.length - 1];
+    const socket = getSocket();
+    if (conversationId && lastMessage?._id && socket?.connected && !lastMessage._id.startsWith('temp-')) {
+      socket.emit('message:read', { conversationId, messageId: lastMessage._id });
+    }
+  }, [conversationId, realMessages]);
 
   if (!activeConversation || !conversationId) {
     return (
@@ -192,6 +228,8 @@ export function ChatWindow({ activeConversation }: ChatWindowProps) {
         isTyping={typingUsers.length > 0}
         typingUserName={typingUserName}
         onReact={handleReact}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
         fetchNextPage={fetchNextPage}
         hasNextPage={hasNextPage}
         isFetchingNextPage={isFetchingNextPage}

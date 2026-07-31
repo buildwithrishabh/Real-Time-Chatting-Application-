@@ -6,6 +6,7 @@ import type { NavTab } from '../../store/ui.store';
 import { notificationsApi } from '../../api/notifications.api';
 import { getSocket } from '../../socket/client';
 import { cn } from '../../lib/utils';
+import { useSocketStore } from '../../store/socket.store';
 
 export function MobileBottomNav() {
   const {
@@ -15,6 +16,7 @@ export function MobileBottomNav() {
     setNotificationOpen,
   } = useUIStore();
   const activeConversationId = useChatStore((s) => s.activeConversationId);
+  const isConnected = useSocketStore((s) => s.isConnected);
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
@@ -22,7 +24,7 @@ export function MobileBottomNav() {
       .getUnreadCount()
       .then((res) => setUnreadCount(res.unreadCount || 0))
       .catch(() => {});
-  }, []);
+  }, [isConnected]);
 
   useEffect(() => {
     const socket = getSocket();

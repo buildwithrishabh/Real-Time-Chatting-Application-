@@ -25,6 +25,9 @@ export function MessageBubble({ message, isOwn, onReact, onEdit, onDelete }: Mes
   const actionsRef = useRef<HTMLDivElement>(null);
   const editInputRef = useRef<HTMLInputElement>(null);
   const currentUserId = useAuthStore((s) => s.user?._id || (s.user as any)?.id);
+  const fileUrl =
+    message.fileUrl ||
+    (typeof message.fileId === 'object' ? message.fileId.url || message.fileId.thumbnailUrl : undefined);
 
   const reactionsList = Object.entries(message.reactions || {}).filter(([_, users]) => users.length > 0);
   const userReactedEmojis = reactionsList
@@ -101,7 +104,7 @@ export function MessageBubble({ message, isOwn, onReact, onEdit, onDelete }: Mes
                 : 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200/80 dark:border-slate-700/80 rounded-bl-xs'
             )}
           >
-            {message.fileUrl && (
+            {fileUrl && (
               <div className="mb-2 overflow-hidden rounded-xl">
                 {message.type === 'image' ? (
                   <button
@@ -110,7 +113,7 @@ export function MessageBubble({ message, isOwn, onReact, onEdit, onDelete }: Mes
                     aria-label="View attachment"
                   >
                     <img
-                      src={message.fileUrl}
+                      src={fileUrl}
                       alt="Attachment"
                       className="max-h-60 w-full object-cover rounded-xl hover:opacity-95 transition-opacity cursor-pointer"
                       loading="lazy"
@@ -118,7 +121,7 @@ export function MessageBubble({ message, isOwn, onReact, onEdit, onDelete }: Mes
                   </button>
                 ) : (
                   <a
-                    href={message.fileUrl}
+                    href={fileUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-3 p-3 bg-slate-100 dark:bg-slate-900 rounded-xl hover:opacity-90 transition-opacity"
@@ -284,7 +287,7 @@ export function MessageBubble({ message, isOwn, onReact, onEdit, onDelete }: Mes
       </div>
 
       {/* Image lightbox */}
-      {lightboxOpen && message.fileUrl && (
+      {lightboxOpen && fileUrl && (
         <div
           className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           onClick={() => setLightboxOpen(false)}
@@ -297,7 +300,7 @@ export function MessageBubble({ message, isOwn, onReact, onEdit, onDelete }: Mes
             <X className="w-6 h-6" />
           </button>
           <img
-            src={message.fileUrl}
+            src={fileUrl}
             alt="Full size preview"
             className="max-w-full max-h-full object-contain rounded-2xl"
             onClick={(e) => e.stopPropagation()}

@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getSocket } from '../socket/client';
+import { useSocketStore } from '../store/socket.store';
 
 export function useTyping(conversationId: string | null) {
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
+  const isConnected = useSocketStore((s) => s.isConnected);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const startTyping = useCallback(() => {
@@ -16,7 +18,7 @@ export function useTyping(conversationId: string | null) {
     timeoutRef.current = setTimeout(() => {
       stopTyping();
     }, 3000);
-  }, [conversationId]);
+  }, [conversationId, isConnected]);
 
   const stopTyping = useCallback(() => {
     if (!conversationId) return;

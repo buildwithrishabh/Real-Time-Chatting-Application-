@@ -45,7 +45,7 @@ export function Sidebar() {
       .getUnreadCount()
       .then((res) => setUnreadNotifCount(res.unreadCount || 0))
       .catch(() => {});
-  }, []);
+  }, [isConnected]);
 
   useEffect(() => {
     const socket = getSocket();

@@ -8,6 +8,13 @@ export interface AuthResponse {
   isProfileComplete: boolean;
 }
 
+export interface RegisterResponse {
+  user: Pick<User, 'username' | 'email'> & {
+    id: string;
+    verificationToken?: string;
+  };
+}
+
 export const authApi = {
   login: async (payload: { email: string; password: string; deviceId?: string }) => {
     const res = await client.post<ApiSuccess<AuthResponse>>('/auth/login', payload);
@@ -19,7 +26,7 @@ export const authApi = {
     email: string;
     password: string;
   }) => {
-    const res = await client.post<ApiSuccess<AuthResponse>>('/auth/register', payload);
+    const res = await client.post<ApiSuccess<RegisterResponse>>('/auth/register', payload);
     return res.data.data;
   },
 

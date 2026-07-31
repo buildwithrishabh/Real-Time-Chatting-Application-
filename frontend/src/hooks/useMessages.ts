@@ -3,21 +3,23 @@ import type { InfiniteData } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { messagesApi } from '../api/messages.api';
 import { getSocket } from '../socket/client';
+import { useSocketStore } from '../store/socket.store';
 import type { Message } from '../types/message';
 import type { CursorPage } from '../types/api';
 import { PAGINATION } from '../lib/constants';
 
 export function useMessages(conversationId: string | null) {
   const queryClient = useQueryClient();
+  const isConnected = useSocketStore((s) => s.isConnected);
 
   const query = useInfiniteQuery({
     queryKey: ['messages', conversationId],
     queryFn: ({ pageParam }) =>
       conversationId
         ? messagesApi.list(conversationId, { cursor: pageParam, limit: PAGINATION.MESSAGES_LIMIT })
-        : Promise.resolve({ items: [], nextCursor: null, hasNext: false }),
+        : Promise.resolve({ items: [], nextCursor: null, hasMore: false }),
     initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => (lastPage.hasNext ? lastPage.nextCursor ?? undefined : undefined),
+    getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.nextCursor ?? undefined : undefined),
     enabled: !!conversationId,
   });
 
@@ -37,7 +39,7 @@ export function useMessages(conversationId: string | null) {
           if (!old) return old;
           const [firstPage, ...rest] = old.pages;
 
-          if (firstPage.items.some((item) => item._id === message._id)) {
+          if (!firstPage || firstPage.items.some((item) => item._id === message._id)) {
             return old;
           }
 
@@ -58,7 +60,7 @@ export function useMessages(conversationId: string | null) {
       socket.emit('room:leave', { conversationId });
       socket.off('message:new', handleNewMessage);
     };
-  }, [conversationId, queryClient]);
+  }, [conversationId, isConnected, queryClient]);
 
   return query;
 }

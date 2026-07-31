@@ -17,7 +17,7 @@ export interface ApiError {
 export interface CursorPage<T> {
   items: T[];
   nextCursor: string | null;
-  hasNext: boolean;
+  hasMore: boolean;
 }
 
 export interface OffsetPage<T> {

@@ -3,17 +3,19 @@ import { useEffect } from 'react';
 import { chatsApi } from '../api/chats.api';
 import { getSocket } from '../socket/client';
 import { PAGINATION } from '../lib/constants';
+import { useSocketStore } from '../store/socket.store';
 
 export function useConversations() {
   const queryClient = useQueryClient();
+  const isConnected = useSocketStore((s) => s.isConnected);
 
   const query = useInfiniteQuery({
     queryKey: ['conversations'],
     queryFn: ({ pageParam }) =>
       chatsApi.list({ cursor: pageParam, limit: PAGINATION.CONVERSATIONS_LIMIT }),
     initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage: any) =>
-      (lastPage?.hasMore || lastPage?.hasNext) ? lastPage.nextCursor ?? undefined : undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? lastPage.nextCursor ?? undefined : undefined,
   });
 
   useEffect(() => {
@@ -28,7 +30,7 @@ export function useConversations() {
     return () => {
       socket.off('message:new', handleNewMessage);
     };
-  }, [queryClient]);
+  }, [isConnected, queryClient]);
 
   return query;
 }

@@ -40,18 +40,21 @@ export function ConversationItem({ conversation, isActive, onClick }: Conversati
   });
 
   const unreadCount = myParticipant?.unreadCount || 0;
+  const lastMessage =
+    conversation.lastMessage ||
+    (typeof conversation.lastMessageId === 'object' ? conversation.lastMessageId : null);
 
-  const lastMessageText = conversation.lastMessage
-    ? conversation.lastMessage.isDeletedForEveryone
+  const lastMessageText = lastMessage
+    ? lastMessage.isDeletedForEveryone
       ? 'This message was deleted'
-      : conversation.lastMessage.content
-        ? conversation.lastMessage.content
-        : conversation.lastMessage.fileId
-          ? conversation.lastMessage.type === 'image'
+      : lastMessage.content
+        ? lastMessage.content
+        : lastMessage.fileId
+          ? lastMessage.type === 'image'
             ? 'Photo'
-            : conversation.lastMessage.type === 'video'
+            : lastMessage.type === 'video'
               ? 'Video'
-              : conversation.lastMessage.type === 'audio'
+              : lastMessage.type === 'audio'
                 ? 'Voice message'
                 : 'Attachment'
           : ''

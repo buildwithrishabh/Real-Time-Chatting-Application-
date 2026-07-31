@@ -1,6 +1,14 @@
 import { create } from 'zustand';
 import type { User } from '../types/user';
 
+function normalizeUser(user: User): User {
+  const backendId = user._id || user.id;
+  return {
+    ...user,
+    _id: backendId || '',
+  };
+}
+
 function getOrCreateDeviceId(): string {
   const STORAGE_KEY = 'chat_device_id';
   let deviceId = localStorage.getItem(STORAGE_KEY);
@@ -51,14 +59,14 @@ export const useAuthStore = create<AuthState>((set) => ({
   setAuth: (accessToken, user, isProfileComplete) =>
     set({
       accessToken,
-      user,
+      user: normalizeUser(user),
       isAuthenticated: true,
       isProfileComplete: isProfileComplete ?? user.isProfileComplete ?? true,
     }),
 
   setProfileComplete: (isProfileComplete) => set({ isProfileComplete }),
 
-  setUser: (user) => set({ user }),
+  setUser: (user) => set({ user: normalizeUser(user) }),
 
   clearAuth: () =>
     set({

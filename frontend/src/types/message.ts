@@ -13,11 +13,17 @@ export type MessageType =
 
 export interface Message {
   _id: string;
+  tempId?: string;
   conversationId: string;
   senderId: string;
   content: string;
   type: MessageType;
-  fileId?: string;
+  fileId?: string | {
+    _id: string;
+    url?: string;
+    thumbnailUrl?: string;
+    mimeType?: string;
+  };
   fileUrl?: string;
   replyToMessageId?: string;
   threadId?: string;

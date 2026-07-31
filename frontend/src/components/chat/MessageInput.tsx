@@ -24,6 +24,7 @@ export function MessageInput({
   const [showEmoji, setShowEmoji] = useState(false);
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const emojiRef = useRef<HTMLDivElement>(null);
   const { upload, isUploading, progress } = useFileUpload();
 
@@ -37,8 +38,10 @@ export function MessageInput({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setText(e.target.value);
+    e.target.style.height = 'auto';
+    e.target.style.height = `${Math.min(e.target.scrollHeight, 144)}px`;
     if (e.target.value.trim()) {
       onTypingStart?.();
     } else {
@@ -84,6 +87,7 @@ export function MessageInput({
 
     onSendMessage(text.trim(), fileId);
     setText('');
+    if (textAreaRef.current) textAreaRef.current.style.height = 'auto';
     handleRemoveFile();
     onTypingStop?.();
   };
@@ -92,6 +96,14 @@ export function MessageInput({
     setText((prev) => prev + emoji);
     setShowEmoji(false);
     onTypingStart?.();
+    requestAnimationFrame(() => textAreaRef.current?.focus());
+  };
+
+  const handleTextKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      e.currentTarget.form?.requestSubmit();
+    }
   };
 
   const getFileIcon = () => {
@@ -174,12 +186,14 @@ export function MessageInput({
           )}
         </div>
 
-        <input
-          type="text"
+        <textarea
+          ref={textAreaRef}
           value={text}
           onChange={handleTextChange}
+          onKeyDown={handleTextKeyDown}
           placeholder="Type a message..."
-          className="flex-1 min-w-0 bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60 focus:border-violet-500/50 rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 transition-all duration-200 font-medium"
+          rows={1}
+          className="flex-1 min-w-0 max-h-36 resize-none bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60 focus:border-violet-500/50 rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 transition-all duration-200 font-medium leading-relaxed"
         />
 
         <input

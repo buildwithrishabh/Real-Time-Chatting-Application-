@@ -7,6 +7,7 @@ import { useChatStore } from '../../store/chat.store';
 import { useSocketStore } from '../../store/socket.store';
 import { useUIStore } from '../../store/ui.store';
 import { cn } from '../../lib/utils';
+import { useAuthStore } from '../../store/auth.store';
 
 interface ChatSidebarProps {
   conversations: Conversation[];
@@ -21,15 +22,19 @@ export function ChatSidebar({ conversations, isLoading }: ChatSidebarProps) {
   const { activeConversationId, setActiveConversation } = useChatStore();
   const isConnected = useSocketStore((s) => s.isConnected);
   const { setNewChatOpen, setMobileDrawerOpen } = useUIStore();
+  const currentUserId = useAuthStore((s) => s.user?._id);
 
   const filteredConversations = conversations.filter((conv) => {
-    const title = conv.name || '';
+    const participantNames = conv.participants
+      ?.map((p) => (typeof p.userId === 'object' ? `${p.userId.displayName || ''} ${p.userId.username || ''}` : ''))
+      .join(' ');
+    const title = `${conv.name || ''} ${participantNames || ''}`;
     const matchesSearch = title.toLowerCase().includes(searchQuery.toLowerCase());
     if (!matchesSearch) return false;
     if (filterTab === 'unread') {
       const myParticipant = conv.participants?.find((p) => {
         const pId = typeof p.userId === 'string' ? p.userId : p.userId._id;
-        return pId === useChatStore.getState().activeConversationId || true;
+        return pId === currentUserId;
       });
       return (myParticipant?.unreadCount || 0) > 0;
     }

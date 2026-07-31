@@ -22,6 +22,7 @@ export interface Conversation {
   name?: string;
   avatarUrl?: string;
   participants: Participant[];
+  lastMessageId?: Message | string | null;
   lastMessage?: Message;
   ownerId?: string;
   createdAt: string;

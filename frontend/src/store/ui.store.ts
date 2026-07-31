@@ -106,7 +106,7 @@ const initialDarkMode =
   localStorage.getItem('theme') === 'dark' ||
   (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
-const savedAccent = (localStorage.getItem('accent') as AccentColor) || 'violet';
+const savedAccent = (localStorage.getItem('accent') as AccentColor) || 'cyan';
 
 if (initialDarkMode) {
   document.documentElement.classList.add('dark');

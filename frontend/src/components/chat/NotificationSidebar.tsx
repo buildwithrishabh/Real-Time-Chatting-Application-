@@ -16,6 +16,7 @@ import type { AppNotification } from '../../types/notification';
 import { useChatStore } from '../../store/chat.store';
 import { useUIStore } from '../../store/ui.store';
 import { getSocket } from '../../socket/client';
+import { useSocketStore } from '../../store/socket.store';
 import { formatConversationDate } from '../../lib/format';
 import { toast } from 'sonner';
 import { cn } from '../../lib/utils';
@@ -25,6 +26,7 @@ type FilterTab = 'all' | 'unread' | 'mentions' | 'system';
 export function NotificationSidebar() {
   const { isNotificationOpen, setNotificationOpen, setActiveTab } = useUIStore();
   const { setActiveConversation } = useChatStore();
+  const isConnected = useSocketStore((s) => s.isConnected);
 
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -64,7 +66,7 @@ export function NotificationSidebar() {
     return () => {
       socket.off('notification:received', handleNewNotification);
     };
-  }, []);
+  }, [isConnected]);
 
   if (!isNotificationOpen) return null;
 

@@ -5,7 +5,7 @@ import type { FileMeta } from '../types/file';
 export const filesApi = {
   sign: async (category: string, mimeType: string) => {
     const res = await client.get<ApiSuccess<SignUploadResponse>>('/files/sign', {
-      params: { category, mimeType },
+      params: { type: category, mimeType },
     });
     return res.data.data;
   },

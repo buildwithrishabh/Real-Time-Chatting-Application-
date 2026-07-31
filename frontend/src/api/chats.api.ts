@@ -7,12 +7,6 @@ export const chatsApi = {
     const res = await client.get<ApiSuccess<CursorPage<Conversation>>>('/chats', { params });
     return res.data.data;
   },
-
-  getById: async (id: string) => {
-    const res = await client.get<ApiSuccess<Conversation>>(`/chats/${id}`);
-    return res.data.data;
-  },
-
   create: async (payload: { type: 'private' | 'group'; name?: string; participantUserIds: string[] }) => {
     const res = await client.post<ApiSuccess<Conversation>>('/chats', payload);
     return res.data.data;
