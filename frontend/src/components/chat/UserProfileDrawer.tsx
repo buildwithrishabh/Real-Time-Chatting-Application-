@@ -60,10 +60,16 @@ export function UserProfileDrawer({ activeConversation, messages }: UserProfileD
 
   useEffect(() => {
     if (otherUserId) {
-      usersApi.listBlocked().then((blockedList) => {
-        const isUserBlocked = (blockedList || []).some((u) => u._id === otherUserId || (u as any).id === otherUserId);
-        setIsBlocked(isUserBlocked);
-      }).catch(() => {});
+      usersApi
+        .listBlocked()
+        .then((blockedList) => {
+          const list = Array.isArray(blockedList) ? blockedList : [];
+          const isUserBlocked = list.some(
+            (u) => u && (u._id === otherUserId || (u as any).id === otherUserId)
+          );
+          setIsBlocked(isUserBlocked);
+        })
+        .catch(() => {});
     }
   }, [otherUserId]);
 
@@ -95,15 +101,38 @@ export function UserProfileDrawer({ activeConversation, messages }: UserProfileD
 
   const isOnline = otherUserId ? onlineUsers[otherUserId] === 'online' : false;
 
+  const getMessageFileUrl = (m: Message): string | undefined => {
+    if (!m) return undefined;
+    if (m.fileUrl) return m.fileUrl;
+    if (m.fileId && typeof m.fileId === 'object') {
+      return m.fileId.url || m.fileId.thumbnailUrl;
+    }
+    return undefined;
+  };
+
   // Filter Shared Media (Images / Videos)
-  const sharedMedia = (messages || []).filter(
-    (m) => m?.fileUrl && typeof m.fileUrl === 'string' && (m.type === 'image' || m.type === 'video' || m.fileUrl.match(/\.(jpg|jpeg|png|webp|gif|mp4|mov)$/i))
-  );
+  const sharedMedia = (messages || [])
+    .map((m) => ({ message: m, url: getMessageFileUrl(m) }))
+    .filter(
+      ({ message: m, url }) =>
+        url &&
+        (m.type === 'image' ||
+          m.type === 'video' ||
+          /\.(jpg|jpeg|png|webp|gif|mp4|mov)$/i.test(url))
+    );
 
   // Filter Shared Docs & Files (PDFs, Zip, Documents, Audio)
-  const sharedDocs = (messages || []).filter(
-    (m) => m?.fileUrl && typeof m.fileUrl === 'string' && !m.fileUrl.match(/\.(jpg|jpeg|png|webp|gif|mp4|mov)$/i)
-  );
+  const sharedDocs = (messages || [])
+    .map((m) => ({ message: m, url: getMessageFileUrl(m) }))
+    .filter(
+      ({ message: m, url }) =>
+        url &&
+        !(
+          m.type === 'image' ||
+          m.type === 'video' ||
+          /\.(jpg|jpeg|png|webp|gif|mp4|mov)$/i.test(url)
+        )
+    );
 
   // Filter Shared Web Links
   const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -113,7 +142,10 @@ export function UserProfileDrawer({ activeConversation, messages }: UserProfileD
       const matches = m.content.match(urlRegex);
       if (matches) {
         matches.forEach((url) => {
-          const senderName = (m.senderId && typeof m.senderId === 'object') ? (m.senderId as any)?.displayName || (m.senderId as any)?.username || 'Sender' : 'Sender';
+          const senderName =
+            m.senderId && typeof m.senderId === 'object'
+              ? (m.senderId as any)?.displayName || (m.senderId as any)?.username || 'Sender'
+              : 'Sender';
           sharedLinks.push({
             url,
             date: m.createdAt,
@@ -308,14 +340,14 @@ export function UserProfileDrawer({ activeConversation, messages }: UserProfileD
                   </div>
                 ) : (
                   <div className="grid grid-cols-3 gap-2">
-                    {sharedMedia.map((m) => (
+                    {sharedMedia.map(({ message: m, url }) => (
                       <button
                         key={m._id}
-                        onClick={() => m.fileUrl && setLightboxUrl(m.fileUrl)}
+                        onClick={() => url && setLightboxUrl(url)}
                         className="group relative aspect-square rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60"
                       >
                         <img
-                          src={m.fileUrl}
+                          src={url}
                           alt="Shared media"
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                         />
@@ -334,10 +366,10 @@ export function UserProfileDrawer({ activeConversation, messages }: UserProfileD
                     No documents or files shared in this chat
                   </div>
                 ) : (
-                  sharedDocs.map((m) => (
+                  sharedDocs.map(({ message: m, url }) => (
                     <a
                       key={m._id}
-                      href={m.fileUrl}
+                      href={url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"

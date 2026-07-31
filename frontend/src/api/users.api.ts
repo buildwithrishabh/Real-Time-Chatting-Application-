@@ -42,7 +42,12 @@ export const usersApi = {
   },
 
   listBlocked: async () => {
-    const res = await client.get<ApiSuccess<User[]>>('/users/blocked');
-    return res.data.data;
+    const res = await client.get<ApiSuccess<any>>('/users/blocked');
+    const data = res.data?.data;
+    if (Array.isArray(data)) return data;
+    if (data && typeof data === 'object' && 'users' in data && Array.isArray(data.users)) {
+      return data.users;
+    }
+    return [];
   },
 };
