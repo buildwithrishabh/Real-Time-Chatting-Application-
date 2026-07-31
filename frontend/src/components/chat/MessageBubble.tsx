@@ -233,11 +233,17 @@ export function MessageBubble({ message, isOwn, onReact, onUnreact, onEdit, onDe
               {isOwn && !message.isDeletedForEveryone && (
                 <span>
                   {message.status === 'read' || (message.readBy && message.readBy.length > 0) ? (
-                    <CheckCheck className="w-3.5 h-3.5 text-cyan-300 dark:text-cyan-400 stroke-[2.5]" title="Read / Seen" />
+                    <span title="Read / Seen">
+                      <CheckCheck className="w-3.5 h-3.5 text-cyan-300 dark:text-cyan-400 stroke-[2.5]" />
+                    </span>
                   ) : message.status === 'delivered' ? (
-                    <CheckCheck className="w-3.5 h-3.5 text-white/75 stroke-[2.5]" title="Delivered" />
+                    <span title="Delivered">
+                      <CheckCheck className="w-3.5 h-3.5 text-white/75 stroke-[2.5]" />
+                    </span>
                   ) : (
-                    <Check className="w-3.5 h-3.5 text-white/75 stroke-[2.5]" title="Sent" />
+                    <span title="Sent">
+                      <Check className="w-3.5 h-3.5 text-white/75 stroke-[2.5]" />
+                    </span>
                   )}
                 </span>
               )}
