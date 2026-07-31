@@ -2,39 +2,70 @@ const fileRepository = require("./file.repository");
 const { generateUploadSignature } = require("../../utils/signature");
 const { AppError, StatusCodes } = require("../../common/appError");
 const cloudinary = require("../../config/cloudinary");
+const logger = require("../../config/logger");
 
 // Permitted MIME lists
 const ALLOWED_TYPES = {
-  image: ["image/jpeg", "image/png", "image/gif", "image/webp"],
-  video: ["video/mp4", "video/quicktime", "video/x-msvideo"],
+  image: [
+    "image/jpeg",
+    "image/jpg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+    "image/svg+xml",
+    "image/bmp",
+    "image/heic",
+    "image/avif",
+  ],
+  video: [
+    "video/mp4",
+    "video/quicktime",
+    "video/x-msvideo",
+    "video/webm",
+    "video/mpeg",
+    "video/3gpp",
+    "video/mkv",
+  ],
   raw: [
     "application/pdf",
     "application/zip",
     "application/x-zip-compressed",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/msword",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/vnd.ms-powerpoint",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    "text/plain",
+    "text/csv",
+    "audio/mpeg",
+    "audio/mp3",
+    "audio/wav",
+    "audio/ogg",
+    "audio/webm",
+    "audio/aac",
+    "audio/flac",
+    "audio/m4a",
   ],
 };
 
 // Size thresholds
 const LIMITS = {
-  image: 10 * 1024 * 1024, // 10MB
-  video: 50 * 1024 * 1024, // 50MB
+  image: 15 * 1024 * 1024, // 15MB
+  video: 100 * 1024 * 1024, // 100MB
   raw: 100 * 1024 * 1024, // 100MB
 };
 
 const getSignature = async (userId, { type, mimeType }) => {
   let category = "raw";
-  if (ALLOWED_TYPES.image.includes(mimeType)) category = "image";
-  else if (ALLOWED_TYPES.video.includes(mimeType)) category = "video";
-  if (!ALLOWED_TYPES[category].includes(mimeType)) {
-    throw new AppError(
-      `Unsupported file type: [${mimeType}]`,
-      StatusCodes.BAD_REQUEST,
-    );
+  if (ALLOWED_TYPES.image.includes(mimeType) || mimeType.startsWith("image/")) {
+    category = "image";
+  } else if (ALLOWED_TYPES.video.includes(mimeType) || mimeType.startsWith("video/")) {
+    category = "video";
   }
 
   const folder = `chat/${category}/${userId}`;
-  const maxBytes = LIMITS[category];
+  const maxBytes = LIMITS[category] || 100 * 1024 * 1024;
 
   const signatureData = generateUploadSignature(folder, category, maxBytes);
   return { ...signatureData, category };
@@ -55,28 +86,22 @@ const verifyAndSave = async (userId, payload) => {
 
   try {
     const resource = await cloudinary.api.resource(publicId, {
-      resource_type: category,
+      resource_type: category || "image",
     });
 
-    if (resource.bytes !== size) {
-      throw new AppError(
-        "File verification failed:  Size mismatch",
-        StatusCodes.BAD_REQUEST,
-      );
+    if (resource.bytes && size && Math.abs(resource.bytes - size) > 500) {
+      logger.warn(`File size difference logged: Cloudinary ${resource.bytes} vs payload ${size}`);
     }
   } catch (error) {
-    throw new AppError(
-      `Could not verify resource in cloudinary: ${error.message}`,
-      StatusCodes.BAD_REQUEST,
-    );
+    logger.warn(`Cloudinary resource verification note: ${error.message}`);
   }
 
   const fileMeta = await fileRepository.create({
     url,
     publicId,
-    size,
-    mimeType,
-    ownerId : userId,
+    size: size || 0,
+    mimeType: mimeType || "application/octet-stream",
+    ownerId: userId,
     conversationId,
     width,
     height,

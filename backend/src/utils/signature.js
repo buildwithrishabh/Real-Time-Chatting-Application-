@@ -1,15 +1,13 @@
 const cloudinary = require('../config/cloudinary');
 const env = require('../config/env');
 
-
-const generateUploadSignature = (folder , resourceType = "image" , maxBytes) => {
+const generateUploadSignature = (folder, resourceType = "image", maxBytes) => {
     const timestamp = Math.round(new Date().getTime() / 1000);
 
-    const paramsToSign =  {
-        timestamp ,
+    // Only sign parameters that are sent in the client POST body to Cloudinary
+    const paramsToSign = {
+        timestamp,
         folder,
-        resource_type: resourceType,
-        max_file_size: maxBytes
     };
 
     const signature = cloudinary.utils.api_sign_request(
@@ -24,6 +22,6 @@ const generateUploadSignature = (folder , resourceType = "image" , maxBytes) => 
         apiKey: env.CLOUDINARY_API_KEY,
         cloudName: env.CLOUDINARY_CLOUD_NAME
     };
-}
+};
 
-module.exports = {generateUploadSignature};
+module.exports = { generateUploadSignature };
