@@ -26,9 +26,24 @@ export function MessageBubble({ message, isOwn, onReact, onUnreact, onEdit, onDe
   const actionsRef = useRef<HTMLDivElement>(null);
   const editInputRef = useRef<HTMLInputElement>(null);
   const currentUserId = useAuthStore((s) => s.user?._id || (s.user as any)?.id)?.toString();
-  const fileUrl =
-    message.fileUrl ||
-    (message.fileId && typeof message.fileId === 'object' ? message.fileId.url || message.fileId.thumbnailUrl : undefined);
+  const fileObj = message.fileId && typeof message.fileId === 'object' ? message.fileId : null;
+  const fileUrl = message.fileUrl || fileObj?.url || fileObj?.thumbnailUrl;
+  const mimeType = fileObj?.mimeType || '';
+
+  const isImage =
+    message.type === 'image' ||
+    mimeType.startsWith('image/') ||
+    Boolean(fileUrl && /\.(jpg|jpeg|png|webp|gif|svg)(\?.*)?$/i.test(fileUrl));
+
+  const isVideo =
+    message.type === 'video' ||
+    mimeType.startsWith('video/') ||
+    Boolean(fileUrl && /\.(mp4|webm|mov|ogg)(\?.*)?$/i.test(fileUrl));
+
+  const isAudio =
+    message.type === 'audio' ||
+    mimeType.startsWith('audio/') ||
+    Boolean(fileUrl && /\.(mp3|wav|ogg|m4a)(\?.*)?$/i.test(fileUrl));
 
   const reactionsList = Object.entries(message.reactions || {}).filter(([_, users]) => Array.isArray(users) && users.length > 0);
   const userReactedEmojis = reactionsList
@@ -119,7 +134,7 @@ export function MessageBubble({ message, isOwn, onReact, onUnreact, onEdit, onDe
           >
             {fileUrl && (
               <div className="mb-2 overflow-hidden rounded-xl">
-                {message.type === 'image' ? (
+                {isImage ? (
                   <button
                     onClick={() => setLightboxOpen(true)}
                     className="block w-full"
@@ -128,10 +143,22 @@ export function MessageBubble({ message, isOwn, onReact, onUnreact, onEdit, onDe
                     <img
                       src={fileUrl}
                       alt="Attachment"
-                      className="max-h-60 w-full object-cover rounded-xl hover:opacity-95 transition-opacity cursor-pointer"
+                      className="max-h-72 w-full object-cover rounded-xl hover:opacity-95 transition-opacity cursor-pointer"
                       loading="lazy"
                     />
                   </button>
+                ) : isVideo ? (
+                  <video
+                    src={fileUrl}
+                    controls
+                    className="max-h-72 w-full rounded-xl"
+                  />
+                ) : isAudio ? (
+                  <audio
+                    src={fileUrl}
+                    controls
+                    className="w-full mt-1"
+                  />
                 ) : (
                   <a
                     href={fileUrl}
@@ -143,9 +170,9 @@ export function MessageBubble({ message, isOwn, onReact, onUnreact, onEdit, onDe
                     <FileText className="w-6 h-6 text-violet-500 flex-shrink-0" />
                     <div className="min-w-0 flex-1">
                       <span className="text-xs font-semibold truncate block">
-                        {message.type === 'video' ? 'Video' : message.type === 'audio' ? 'Audio' : message.type === 'pdf' ? 'PDF' : 'File'}
+                        {message.type === 'pdf' ? 'PDF Document' : 'Document / File'}
                       </span>
-                      <span className="text-[10px] text-slate-400">Click to open</span>
+                      <span className="text-[10px] text-slate-400">Click to view / download</span>
                     </div>
                     <ExternalLink className="w-4 h-4 text-slate-400 flex-shrink-0" />
                   </a>

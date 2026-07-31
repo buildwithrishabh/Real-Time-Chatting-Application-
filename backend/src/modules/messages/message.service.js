@@ -37,20 +37,40 @@ const sendMessage = async (senderId, payload) => {
     }
   }
 
+  const File = require("../../model/File");
+
+  let messageType = type;
+  let fileDoc = null;
+
+  if (fileId) {
+    fileDoc = await File.findById(fileId);
+    if (fileDoc && (!messageType || messageType === "text")) {
+      const mime = fileDoc.mimeType || "";
+      if (mime.startsWith("image/")) messageType = "image";
+      else if (mime.startsWith("video/")) messageType = "video";
+      else if (mime.startsWith("audio/")) messageType = "audio";
+      else if (mime.includes("pdf")) messageType = "pdf";
+      else if (mime.includes("zip")) messageType = "zip";
+      else messageType = "document";
+    }
+  }
+
   const message = await messageRepository.saveMessage({
     conversationId,
     senderId,
     content,
-    type,
+    type: messageType || "text",
     fileId: fileId || null,
     replyToMessageId: replyToMessageId || null,
     mentions: mentions || [],
   });
 
+  const populatedMessage = await message.populate("fileId");
+
   // Update Conversation with lastMessageId and latest updatedAt
   await Conversation.findByIdAndUpdate(conversationId, {
-    lastMessageId: message._id,
-    updatedAt: message.createdAt || new Date(),
+    lastMessageId: populatedMessage._id,
+    updatedAt: populatedMessage.createdAt || new Date(),
   });
 
   // Increment unreadCount for other participants
@@ -77,9 +97,9 @@ const sendMessage = async (senderId, payload) => {
           : `New Message from ${senderName}`,
         body:
           content ||
-          (type === "image" ? "📷 Sent an image" : "Sent an attachment"),
+          (messageType === "image" ? "📷 Sent an image" : "Sent an attachment"),
         chatId: conversationId,
-        messageId: message._id,
+        messageId: populatedMessage._id,
       });
     });
 
@@ -87,7 +107,7 @@ const sendMessage = async (senderId, payload) => {
     console.error("Failed to send notification", error);
   });
 
-  return message;
+  return populatedMessage;
 };
 
 const getMessages = async (userId, conversationId, cursor, limit = 50) => {
