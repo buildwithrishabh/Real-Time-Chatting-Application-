@@ -1,10 +1,14 @@
-export function formatMessageTime(dateString: string): string {
+export function formatMessageTime(dateString?: string | null): string {
+  if (!dateString) return '';
   const date = new Date(dateString);
+  if (isNaN(date.getTime())) return '';
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-export function formatConversationDate(dateString: string): string {
+export function formatConversationDate(dateString?: string | null): string {
+  if (!dateString) return '';
   const date = new Date(dateString);
+  if (isNaN(date.getTime())) return '';
   const now = new Date();
   const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 3600 * 24));
 
@@ -20,7 +24,7 @@ export function formatConversationDate(dateString: string): string {
 }
 
 export function formatFileSize(bytes: number): string {
-  if (bytes === 0) return '0 B';
+  if (!bytes || bytes === 0) return '0 B';
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));

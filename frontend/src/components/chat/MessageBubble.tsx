@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { CheckCheck, Smile, MoreHorizontal, Pencil, Trash2, FileText, ExternalLink, X } from 'lucide-react';
 import type { Message } from '../../types/message';
 import { formatMessageTime } from '../../lib/format';
@@ -19,19 +19,19 @@ export function MessageBubble({ message, isOwn, onReact, onEdit, onDelete }: Mes
   const [showReactions, setShowReactions] = useState(false);
   const [showActions, setShowActions] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [editText, setEditText] = useState(message.content);
+  const [editText, setEditText] = useState(message.content || '');
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const reactionsRef = useRef<HTMLDivElement>(null);
   const actionsRef = useRef<HTMLDivElement>(null);
   const editInputRef = useRef<HTMLInputElement>(null);
-  const currentUserId = useAuthStore((s) => s.user?._id || (s.user as any)?.id);
+  const currentUserId = useAuthStore((s) => s.user?._id || (s.user as any)?.id)?.toString();
   const fileUrl =
     message.fileUrl ||
-    (typeof message.fileId === 'object' ? message.fileId.url || message.fileId.thumbnailUrl : undefined);
+    (message.fileId && typeof message.fileId === 'object' ? message.fileId.url || message.fileId.thumbnailUrl : undefined);
 
-  const reactionsList = Object.entries(message.reactions || {}).filter(([_, users]) => users.length > 0);
+  const reactionsList = Object.entries(message.reactions || {}).filter(([_, users]) => Array.isArray(users) && users.length > 0);
   const userReactedEmojis = reactionsList
-    .filter(([_, users]) => currentUserId && users.includes(currentUserId))
+    .filter(([_, users]) => currentUserId && Array.isArray(users) && users.includes(currentUserId))
     .map(([emoji]) => emoji);
 
   useEffect(() => {
@@ -52,7 +52,7 @@ export function MessageBubble({ message, isOwn, onReact, onEdit, onDelete }: Mes
       editInputRef.current.focus();
       editInputRef.current.setSelectionRange(editText.length, editText.length);
     }
-  }, [isEditing]);
+  }, [isEditing, editText.length]);
 
   const handleReact = (emoji: string) => {
     onReact?.(message._id, emoji);
@@ -62,7 +62,7 @@ export function MessageBubble({ message, isOwn, onReact, onEdit, onDelete }: Mes
   const handleEdit = () => {
     setShowActions(false);
     setIsEditing(true);
-    setEditText(message.content);
+    setEditText(message.content || '');
   };
 
   const handleSaveEdit = () => {
@@ -86,6 +86,8 @@ export function MessageBubble({ message, isOwn, onReact, onEdit, onDelete }: Mes
       setIsEditing(false);
     }
   };
+
+  const createdAt = message.createdAt || (message as any).created_at;
 
   return (
     <>
@@ -185,7 +187,7 @@ export function MessageBubble({ message, isOwn, onReact, onEdit, onDelete }: Mes
                 isOwn ? 'text-white/90 justify-end' : 'text-slate-400 justify-end'
               )}
             >
-              <span>{formatMessageTime(message.createdAt)}</span>
+              <span>{formatMessageTime(createdAt)}</span>
               {isOwn && (
                 <CheckCheck className="w-3.5 h-3.5 text-white stroke-[2.5]" />
               )}

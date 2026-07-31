@@ -18,8 +18,10 @@ interface MessageListProps {
   isLoading?: boolean;
 }
 
-function getDateLabel(dateStr: string): string {
+function getDateLabel(dateStr?: string | null): string {
+  if (!dateStr) return 'Today';
   const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return 'Today';
   const now = new Date();
   const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 3600 * 24));
 
@@ -41,7 +43,7 @@ export function MessageList({
   isFetchingNextPage,
   isLoading,
 }: MessageListProps) {
-  const currentUserId = useAuthStore((s) => s.user?._id || (s.user as any)?.id);
+  const currentUserId = useAuthStore((s) => s.user?._id || (s.user as any)?.id)?.toString();
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<HTMLDivElement>(null);
@@ -103,7 +105,7 @@ export function MessageList({
     );
   }
 
-  const showDateDividers = messages.length > 0;
+  const showDateDividers = messages && messages.length > 0;
   let lastDateLabel = '';
 
   return (
@@ -129,15 +131,20 @@ export function MessageList({
 
       {showDateDividers ? (
         messages.map((message) => {
-          const dateLabel = getDateLabel(message.createdAt);
+          if (!message) return null;
+          const createdAt = message.createdAt || (message as any).created_at;
+          const dateLabel = getDateLabel(createdAt);
           const showDate = dateLabel !== lastDateLabel;
           lastDateLabel = dateLabel;
 
-          const senderIdVal = typeof message.senderId === 'object' ? (message.senderId as any)?._id : message.senderId;
-          const isOwn = senderIdVal === currentUserId;
+          const senderIdVal = message.senderId && typeof message.senderId === 'object'
+            ? (message.senderId as any)?._id || (message.senderId as any)?.id
+            : message.senderId;
+
+          const isOwn = Boolean(senderIdVal && currentUserId && senderIdVal.toString() === currentUserId);
 
           return (
-            <div key={message._id}>
+            <div key={message._id || message.tempId || Math.random()}>
               {showDate && <DateDivider date={dateLabel} />}
               <MessageBubble
                 message={message}
