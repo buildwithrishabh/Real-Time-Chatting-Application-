@@ -62,6 +62,8 @@ export function ChatWindow({ activeConversation }: ChatWindowProps) {
     : otherUserObj?.avatarUrl || activeConversation?.avatarUrl;
 
   const isOnline = otherUserId ? onlineUsers[otherUserId] === 'online' : false;
+  const lastSeenAt = usePresenceStore((s) => (otherUserId ? s.lastSeen[otherUserId] : undefined));
+  const otherUserLastSeenAt = lastSeenAt || otherUserObj?.lastSeenAt;
 
   const typingOtherUserId = typingUsers.find((id) => id !== currentUserId);
   const typingUserName = typingOtherUserId && otherUserObj
@@ -118,6 +120,33 @@ export function ChatWindow({ activeConversation }: ChatWindowProps) {
       socket.emit('message:read', { conversationId, messageId: lastMessage._id });
     }
   }, [conversationId, realMessages]);
+
+  // Optimistically clear the unread badge for the conversation being opened
+  useEffect(() => {
+    if (!conversationId || !currentUserId) return;
+    queryClient.setQueryData<any>(['conversations'], (oldData: any) => {
+      if (!oldData) return oldData;
+      return {
+        ...oldData,
+        pages: oldData.pages.map((page: any) => ({
+          ...page,
+          items: page.items.map((conv: any) =>
+            conv._id === conversationId
+              ? {
+                  ...conv,
+                  participants: (conv.participants || []).map((p: any) => {
+                    const pId = typeof p?.userId === 'string'
+                      ? p.userId
+                      : p?.userId?._id || p?.userId?.id;
+                    return pId === currentUserId ? { ...p, unreadCount: 0 } : p;
+                  }),
+                }
+              : conv
+          ),
+        })),
+      };
+    });
+  }, [conversationId, currentUserId, queryClient]);
 
   if (!activeConversation || !conversationId) {
     return (
@@ -189,8 +218,8 @@ export function ChatWindow({ activeConversation }: ChatWindowProps) {
                 ? `${activeConversation.participants?.length || 0} members`
                 : isOnline
                   ? 'Online'
-                  : otherUserObj?.lastSeenAt
-                    ? `Last seen ${formatConversationDate(otherUserObj.lastSeenAt)}`
+                  : otherUserLastSeenAt
+                    ? `Last seen ${formatConversationDate(otherUserLastSeenAt)}`
                     : 'Offline'}
             </span>
           </div>

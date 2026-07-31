@@ -50,7 +50,8 @@ export function Sidebar() {
   useEffect(() => {
     const socket = getSocket();
     if (!socket) return;
-    const handleNewNotif = () => {
+    const handleNewNotif = (data: { activeInRoom?: boolean }) => {
+      if (data?.activeInRoom) return;
       setUnreadNotifCount((prev) => prev + 1);
     };
     socket.on('notification:received', handleNewNotif);

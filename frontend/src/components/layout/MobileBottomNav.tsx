@@ -29,7 +29,8 @@ export function MobileBottomNav() {
   useEffect(() => {
     const socket = getSocket();
     if (!socket) return;
-    const handleNewNotif = () => {
+    const handleNewNotif = (data: { activeInRoom?: boolean }) => {
+      if (data?.activeInRoom) return;
       setUnreadCount((prev) => prev + 1);
     };
     socket.on('notification:received', handleNewNotif);

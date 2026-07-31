@@ -14,7 +14,7 @@ module.exports = (io, socket) => {
       await redis.set(presenceKey, "online");
       await redis.del(lastSeenKey);
 
-      socket.broadcast.emit("user:status_change", {
+      io.emit("user:status_change", {
         userId,
         status: "online",
       });
@@ -59,7 +59,7 @@ module.exports = (io, socket) => {
           logger.warn(`Failed to update lastSeenAt in MongoDB for user ${userId}: ${e.message}`)
         );
 
-        socket.broadcast.emit("user:status_change", {
+        io.emit("user:status_change", {
           userId,
           status: "offline",
           lastSeenAt: lastseen.toISOString(),

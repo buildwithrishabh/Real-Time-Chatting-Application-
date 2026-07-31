@@ -47,31 +47,31 @@ export function UserProfileDrawer({ activeConversation, messages }: UserProfileD
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isUserProfileDrawerOpen, setUserProfileDrawerOpen]);
 
-  if (!isUserProfileDrawerOpen || !activeConversation) return null;
-
-  const otherParticipant = activeConversation.participants?.find((p) => {
+  const otherParticipant = activeConversation?.participants?.find((p) => {
     if (!p?.userId) return false;
     const pId = (typeof p.userId === 'string' ? p.userId : (p.userId._id || (p.userId as any)?.id))?.toString();
     return pId && currentUserId ? pId !== currentUserId : true;
-  }) || activeConversation.participants?.[0];
+  }) || activeConversation?.participants?.[0];
 
   const otherUserObj = (otherParticipant?.userId && typeof otherParticipant.userId === 'object') ? otherParticipant.userId : null;
   const otherUserId = (typeof otherParticipant?.userId === 'string' ? otherParticipant.userId : otherUserObj?._id || (otherUserObj as any)?.id)?.toString();
+  const lastSeenAt = usePresenceStore((s) => (otherUserId ? s.lastSeen[otherUserId] : undefined));
 
   useEffect(() => {
-    if (otherUserId) {
-      usersApi
-        .listBlocked()
-        .then((blockedList) => {
-          const list = Array.isArray(blockedList) ? blockedList : [];
-          const isUserBlocked = list.some(
-            (u) => u && (u._id === otherUserId || (u as any).id === otherUserId)
-          );
-          setIsBlocked(isUserBlocked);
-        })
-        .catch(() => {});
-    }
+    if (!otherUserId) return;
+    usersApi
+      .listBlocked()
+      .then((blockedList) => {
+        const list = Array.isArray(blockedList) ? blockedList : [];
+        const isUserBlocked = list.some(
+          (u) => u && (u._id === otherUserId || (u as any).id === otherUserId)
+        );
+        setIsBlocked(isUserBlocked);
+      })
+      .catch(() => {});
   }, [otherUserId]);
+
+  if (!isUserProfileDrawerOpen || !activeConversation) return null;
 
   const handleToggleBlock = async () => {
     if (!otherUserId) return;
@@ -100,6 +100,7 @@ export function UserProfileDrawer({ activeConversation, messages }: UserProfileD
     : otherUserObj?.avatarUrl || activeConversation.avatarUrl;
 
   const isOnline = otherUserId ? onlineUsers[otherUserId] === 'online' : false;
+  const otherUserLastSeenAt = lastSeenAt || otherUserObj?.lastSeenAt;
 
   const getMessageFileUrl = (m: Message): string | undefined => {
     if (!m) return undefined;
@@ -222,8 +223,8 @@ export function UserProfileDrawer({ activeConversation, messages }: UserProfileD
                 ? `${activeConversation.participants?.length || 0} Members`
                 : isOnline
                   ? 'Active Now'
-                  : otherUserObj?.lastSeenAt
-                    ? `Last seen ${formatConversationDate(otherUserObj.lastSeenAt)}`
+                  : otherUserLastSeenAt
+                    ? `Last seen ${formatConversationDate(otherUserLastSeenAt)}`
                     : 'Offline'}
             </p>
           </div>

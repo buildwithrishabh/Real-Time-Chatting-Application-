@@ -6,6 +6,7 @@ interface PresenceState {
   lastSeen: Record<string, string | undefined>;
   setOnline: (userId: string) => void;
   setOffline: (userId: string, lastSeenAt?: string) => void;
+  syncPresence: (userIds: string[]) => void;
   initListener: () => () => void;
 }
 
@@ -14,15 +15,41 @@ export const usePresenceStore = create<PresenceState>((set, get) => ({
   lastSeen: {},
 
   setOnline: (userId) =>
-    set((state) => ({
-      onlineUsers: { ...state.onlineUsers, [userId]: 'online' },
-    })),
+    set((state) => {
+      const nextLastSeen = { ...state.lastSeen };
+      delete nextLastSeen[userId];
+      return {
+        onlineUsers: { ...state.onlineUsers, [userId]: 'online' },
+        lastSeen: nextLastSeen,
+      };
+    }),
 
   setOffline: (userId, lastSeenAt) =>
     set((state) => ({
       onlineUsers: { ...state.onlineUsers, [userId]: 'offline' },
       lastSeen: lastSeenAt ? { ...state.lastSeen, [userId]: lastSeenAt } : state.lastSeen,
     })),
+
+  syncPresence: (userIds) => {
+    const socket = getSocket();
+    if (!socket?.connected || !userIds.length) return;
+    const uniqueIds = [...new Set(userIds.map((id) => id.toString()))];
+    socket.emit(
+      'presence:query',
+      { userIds: uniqueIds },
+      (response: {
+        success: boolean;
+        data?: Record<string, { status: 'online' | 'offline'; lastSeenAt?: string }>;
+      }) => {
+        if (!response?.success || !response.data) return;
+        const { setOnline, setOffline } = get();
+        for (const [userId, info] of Object.entries(response.data)) {
+          if (info.status === 'online') setOnline(userId);
+          else setOffline(userId, info.lastSeenAt);
+        }
+      }
+    );
+  },
 
   initListener: () => {
     const socket = getSocket();

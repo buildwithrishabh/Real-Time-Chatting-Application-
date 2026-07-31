@@ -1,11 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getSocket } from '../socket/client';
-import { useSocketStore } from '../store/socket.store';
 
 export function useTyping(conversationId: string | null) {
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
-  const isConnected = useSocketStore((s) => s.isConnected);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const stopTyping = useCallback(() => {
+    if (!conversationId) return;
+    const socket = getSocket();
+    if (!socket) return;
+
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    socket.emit('typing:stop', { conversationId });
+  }, [conversationId]);
 
   const startTyping = useCallback(() => {
     if (!conversationId) return;
@@ -18,16 +25,7 @@ export function useTyping(conversationId: string | null) {
     timeoutRef.current = setTimeout(() => {
       stopTyping();
     }, 3000);
-  }, [conversationId, isConnected]);
-
-  const stopTyping = useCallback(() => {
-    if (!conversationId) return;
-    const socket = getSocket();
-    if (!socket) return;
-
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    socket.emit('typing:stop', { conversationId });
-  }, [conversationId]);
+  }, [conversationId, stopTyping]);
 
   useEffect(() => {
     if (!conversationId) return;
@@ -52,6 +50,12 @@ export function useTyping(conversationId: string | null) {
       socket.off('typing:status', handleTypingStatus);
     };
   }, [conversationId]);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
   return {
     startTyping,

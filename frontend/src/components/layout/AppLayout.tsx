@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Bookmark, Phone, Settings, Users, UserPlus, WifiOff } from 'lucide-react';
 import { Sidebar } from './Sidebar';
 import { MobileBottomNav } from './MobileBottomNav';
@@ -23,12 +23,31 @@ export function AppLayout() {
   const activeConversationId = useChatStore((s) => s.activeConversationId);
   const activeTab = useUIStore((s) => s.activeTab);
   const initPresenceListener = usePresenceStore((s) => s.initListener);
+  const syncPresence = usePresenceStore((s) => s.syncPresence);
   const setUser = useAuthStore((s) => s.setUser);
+  const currentUserId = useAuthStore((s) => s.user?._id || (s.user as any)?.id)?.toString();
   const isConnected = useSocketStore((s) => s.isConnected);
   const [isNetworkOffline, setIsNetworkOffline] = useState(!navigator.onLine);
 
   const conversations = conversationsData?.pages.flatMap((page) => page.items) || [];
   const activeConversation = conversations.find((c) => c._id === activeConversationId) || null;
+
+  const participantUserIds = useMemo(() => {
+    const ids: string[] = [];
+    (conversationsData?.pages || []).forEach((page) =>
+      (page.items || []).forEach((conv) => {
+        (conv.participants || []).forEach((p) => {
+          if (!p?.userId) return;
+          const pid =
+            typeof p.userId === 'string'
+              ? p.userId
+              : (p.userId as any)?._id || (p.userId as any)?.id;
+          if (pid && pid.toString() !== currentUserId) ids.push(pid.toString());
+        });
+      })
+    );
+    return [...new Set(ids)];
+  }, [conversationsData, currentUserId]);
   const showChatView = activeTab === 'chats';
   const EmptyTabIcon =
     activeTab === 'people'
@@ -72,6 +91,11 @@ export function AppLayout() {
     const cleanup = initPresenceListener();
     return cleanup;
   }, [initPresenceListener, isConnected]);
+
+  useEffect(() => {
+    if (!isConnected) return;
+    syncPresence(participantUserIds);
+  }, [isConnected, syncPresence, participantUserIds]);
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-100 dark:bg-[#070B12] relative">

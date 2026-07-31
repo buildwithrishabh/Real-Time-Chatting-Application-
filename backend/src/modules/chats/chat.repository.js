@@ -44,7 +44,7 @@ const findUserConversations = async (userId, cursor, limit) => {
 const getParticipants = async (conversationId) => {
   return Participant.find({ conversationId }).populate(
     "userId",
-    "username displayName avatarUrl status lastSeenAt",
+    "username displayName avatarUrl status lastSeenAt bio",
   );
 };
 

@@ -4,10 +4,16 @@ import { chatsApi } from '../api/chats.api';
 import { getSocket } from '../socket/client';
 import { PAGINATION } from '../lib/constants';
 import { useSocketStore } from '../store/socket.store';
+import { useChatStore } from '../store/chat.store';
+import { useAuthStore } from '../store/auth.store';
 
 export function useConversations() {
   const queryClient = useQueryClient();
   const isConnected = useSocketStore((s) => s.isConnected);
+  const activeConversationId = useChatStore((s) => s.activeConversationId);
+  const currentUserId = useAuthStore(
+    (s) => s.user?._id || (s.user as any)?.id
+  )?.toString();
 
   const query = useInfiniteQuery({
     queryKey: ['conversations'],
@@ -23,38 +29,50 @@ export function useConversations() {
     if (!socket) return;
 
     const handleNewMessage = (message: any) => {
-      if (message?.conversationId) {
-        queryClient.setQueryData<any>(['conversations'], (oldData: any) => {
-          if (!oldData) return oldData;
-          return {
-            ...oldData,
-            pages: oldData.pages.map((page: any) => {
-              const updatedItems = page.items.map((conv: any) => {
-                if (conv._id === message.conversationId) {
-                  return {
-                    ...conv,
-                    lastMessageId: message,
-                    lastMessage: message,
-                    updatedAt: message.createdAt || new Date().toISOString(),
-                  };
-                }
-                return conv;
-              });
+      if (!message?.conversationId) return;
 
-              // Re-sort page items so the updated conversation moves to top
-              updatedItems.sort(
-                (a: any, b: any) =>
-                  new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-              );
+      queryClient.setQueryData<any>(['conversations'], (oldData: any) => {
+        if (!oldData) return oldData;
 
-              return {
-                ...page,
-                items: updatedItems,
-              };
-            }),
-          };
-        });
-      }
+        const updatedAt = message.createdAt || new Date().toISOString();
+
+        // Find the updated conversation (removed from wherever it lives) and
+        // optimistically bump / clear the current user's unread count.
+        let updatedConv: any = null;
+        const pages = oldData.pages.map((page: any) => ({
+          ...page,
+          items: page.items.filter((conv: any) => {
+            if (conv._id !== message.conversationId) return true;
+
+            updatedConv = {
+              ...conv,
+              lastMessageId: message._id,
+              lastMessage: message,
+              updatedAt,
+              participants: (conv.participants || []).map((p: any) => {
+                if (!currentUserId) return p;
+                const pId = typeof p?.userId === 'string'
+                  ? p.userId
+                  : p?.userId?._id || p?.userId?.id;
+                if (pId !== currentUserId) return p;
+                const isActive = activeConversationId === message.conversationId;
+                return message.senderId !== currentUserId && !isActive
+                  ? { ...p, unreadCount: (p.unreadCount || 0) + 1 }
+                  : { ...p, unreadCount: 0 };
+              }),
+            };
+            return false;
+          }),
+        }));
+
+        // Move the updated conversation to the top of the first page so the
+        // preview ordering always matches the backend (sorted by updatedAt desc).
+        if (updatedConv && pages.length > 0) {
+          pages[0] = { ...pages[0], items: [updatedConv, ...pages[0].items] };
+        }
+
+        return { ...oldData, pages };
+      });
 
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
     };
@@ -63,7 +81,7 @@ export function useConversations() {
     return () => {
       socket.off('message:new', handleNewMessage);
     };
-  }, [isConnected, queryClient]);
+  }, [isConnected, queryClient, activeConversationId, currentUserId]);
 
   return query;
 }

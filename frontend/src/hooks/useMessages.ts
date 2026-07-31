@@ -124,6 +124,7 @@ export function useMessages(conversationId: string | null) {
       messageId: string;
       messageIds?: string[];
       status: 'read' | 'delivered';
+      timestamp?: string;
     }) => {
       if (data.conversationId !== conversationId) return;
 
@@ -149,7 +150,7 @@ export function useMessages(conversationId: string | null) {
                     status: 'read' as const,
                     readBy: alreadyRead
                       ? existingReadBy
-                      : [...existingReadBy, { userId: data.userId, readAt: new Date().toISOString() }],
+                      : [...existingReadBy, { userId: data.userId, readAt: data.timestamp || new Date().toISOString() }],
                   };
                 }
                 return item;
