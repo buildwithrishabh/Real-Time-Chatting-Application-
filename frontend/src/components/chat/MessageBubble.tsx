@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Check, CheckCheck, Smile, MoreHorizontal, Pencil, Trash2, FileText, ExternalLink, X, UserX } from 'lucide-react';
+import { Check, CheckCheck, Smile, MoreHorizontal, Pencil, Trash2, FileText, ExternalLink, X, UserX, Download } from 'lucide-react';
 import type { Message } from '../../types/message';
 import { formatMessageTime } from '../../lib/format';
 import { cn } from '../../lib/utils';
 import { useAuthStore } from '../../store/auth.store';
+import { filesApi } from '../../api/files.api';
 
 interface MessageBubbleProps {
   message: Message;
@@ -29,6 +30,27 @@ export function MessageBubble({ message, isOwn, onReact, onUnreact, onEdit, onDe
   const fileObj = message.fileId && typeof message.fileId === 'object' ? message.fileId : null;
   const fileUrl = message.fileUrl || fileObj?.url || fileObj?.thumbnailUrl;
   const mimeType = fileObj?.mimeType || '';
+
+  const handleFileDownload = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (fileObj?._id) {
+      try {
+        const data = await filesApi.getDownloadUrl(fileObj._id);
+        if (data?.downloadUrl) {
+          window.open(data.downloadUrl, '_blank');
+          return;
+        }
+      } catch (err) {
+        console.error('Download via API failed, using fallback:', err);
+      }
+    }
+    if (fileUrl) {
+      const fallbackUrl = fileUrl.includes('/upload/')
+        ? fileUrl.replace('/upload/', '/upload/fl_attachment/')
+        : fileUrl;
+      window.open(fallbackUrl, '_blank');
+    }
+  };
 
   const isImage =
     message.type === 'image' ||
@@ -160,22 +182,20 @@ export function MessageBubble({ message, isOwn, onReact, onUnreact, onEdit, onDe
                     className="w-full mt-1"
                   />
                 ) : (
-                  <a
-                    href={fileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-3 p-3 bg-slate-100 dark:bg-slate-900 rounded-xl hover:opacity-90 transition-opacity"
-                    aria-label="Open file attachment"
+                  <button
+                    onClick={handleFileDownload}
+                    className="w-full text-left flex items-center gap-3 p-3 bg-slate-100 dark:bg-slate-900 rounded-xl hover:opacity-90 transition-opacity cursor-pointer"
+                    aria-label="Download file attachment"
                   >
                     <FileText className="w-6 h-6 text-violet-500 flex-shrink-0" />
                     <div className="min-w-0 flex-1">
                       <span className="text-xs font-semibold truncate block">
                         {message.type === 'pdf' ? 'PDF Document' : 'Document / File'}
                       </span>
-                      <span className="text-[10px] text-slate-400">Click to view / download</span>
+                      <span className="text-[10px] text-slate-400">Click to download</span>
                     </div>
-                    <ExternalLink className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                  </a>
+                    <Download className="w-4 h-4 text-violet-500 flex-shrink-0" />
+                  </button>
                 )}
               </div>
             )}

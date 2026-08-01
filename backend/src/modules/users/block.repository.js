@@ -18,7 +18,7 @@ const isBlocked = async (blockerId, blockedId) => {
 };
 
 const getBlockedUsers = async (blockerId) => {
-  return BlockedUser.find({ blockerId })
+  return await BlockedUser.find({ blockerId })
     .populate("blockedId", "username displayName avatarUrl")
     .sort({ createdAt: -1 })
     .lean();

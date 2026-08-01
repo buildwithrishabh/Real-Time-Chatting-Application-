@@ -13,5 +13,6 @@ router.use(authGuard);
 
 router.get("/sign", apiRateLimiter(30, 60), fileController.getSignUrl);
 router.post("/verify", apiRateLimiter(20, 60), fileController.verifyUploads);
+router.get("/:fileId/download", apiRateLimiter(60, 60), fileController.downloadFile);
 
 module.exports = router;

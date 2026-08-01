@@ -20,8 +20,13 @@ const findConversationFiles = async (conversationId, limit = 50) => {
   return File.find({ conversationId }).sort({ createdAt: -1 }).limit(limit);
 };
 
+const findFileById = async (id) => {
+  return File.findById(id);
+};
+
 module.exports = {
   create,
+  findFileById,
   findByPublicId,
   updateVirusStatus,
   findConversationFiles,

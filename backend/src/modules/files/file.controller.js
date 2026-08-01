@@ -37,8 +37,22 @@ const handleScanWebhook = async (req, res, next) => {
   }
 };
 
+const downloadFile = async (req, res, next) => {
+  try {
+    const { fileId } = req.params;
+    const downloadData = await fileService.getSecureDownloadUrl(
+      fileId,
+      req.user.id
+    );
+    res.status(200).json({ success: true, data: downloadData });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   getSignUrl,
   verifyUploads,
-  handleScanWebhook
-}
+  handleScanWebhook,
+  downloadFile,
+};

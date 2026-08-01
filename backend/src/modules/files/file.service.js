@@ -1,4 +1,5 @@
 const fileRepository = require("./file.repository");
+const chatRepository = require("../chats/chat.repository");
 const { generateUploadSignature } = require("../../utils/signature");
 const { AppError, StatusCodes } = require("../../common/appError");
 const cloudinary = require("../../config/cloudinary");
@@ -170,8 +171,49 @@ const handleWebhook = async ({ signature, timestamp, body }) => {
   return updateFile;
 };
 
+const getSecureDownloadUrl = async (fileId, userId) => {
+  const file = await fileRepository.findFileById(fileId);
+  if (!file) {
+    throw new AppError("File not found", StatusCodes.NOT_FOUND);
+  }
+
+  if (file.virusScanStatus !== "passed") {
+    throw new AppError(
+      "File is infected with virus and cannot be downloaded",
+      StatusCodes.FORBIDDEN
+    );
+  }
+
+  const participant = await chatRepository.findParticipant(
+    file.conversationId,
+    userId
+  );
+
+  if (!participant) {
+    throw new AppError(
+      "Access denied: You are not a participant in this conversation",
+      StatusCodes.FORBIDDEN
+    );
+  }
+
+  // Inject fl_attachment flag into Cloudinary URL to force browser download
+  let downloadUrl = file.url;
+  if (downloadUrl && downloadUrl.includes("/upload/")) {
+    downloadUrl = downloadUrl.replace("/upload/", "/upload/fl_attachment/");
+  }
+
+  return {
+    downloadUrl,
+    filename: file.publicId ? file.publicId.split("/").pop() : "download",
+    mimeType: file.mimeType,
+    size: file.size,
+    virusScanStatus: file.virusScanStatus,
+  };
+};
+
 module.exports = {
   getSignature,
   verifyAndSave,
   handleWebhook,
+  getSecureDownloadUrl,
 };

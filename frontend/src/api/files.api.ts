@@ -23,4 +23,11 @@ export const filesApi = {
     const res = await client.post<ApiSuccess<FileMeta>>('/files/verify', payload);
     return res.data.data;
   },
+
+  getDownloadUrl: async (fileId: string) => {
+    const res = await client.get<ApiSuccess<{ downloadUrl: string; filename: string; virusScanStatus?: string }>>(
+      `/files/${fileId}/download`
+    );
+    return res.data.data;
+  },
 };
