@@ -127,14 +127,7 @@ export function LoginPage() {
               )}
             </div>
 
-            <div className="flex items-center justify-between text-xs pt-0.5">
-              <label className="flex items-center gap-2 cursor-pointer text-zinc-400 font-medium">
-                <input
-                  type="checkbox"
-                  className="rounded border-zinc-700 bg-[#111114] text-[#5D5FEF] focus:ring-[#5D5FEF]"
-                />
-                <span>Remember me</span>
-              </label>
+            <div className="flex items-center justify-end text-xs pt-0.5">
               <Link
                 to="/forgot-password"
                 className="font-bold text-[#5D5FEF] hover:underline"

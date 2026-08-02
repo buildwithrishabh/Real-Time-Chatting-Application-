@@ -167,14 +167,6 @@ export function RegisterPage() {
               )}
             </div>
 
-            <div className="flex items-center gap-2 text-[11px] text-zinc-400 pt-0.5 font-medium">
-              <input
-                type="checkbox"
-                required
-                className="rounded border-zinc-700 bg-[#111114] text-[#5D5FEF] focus:ring-[#5D5FEF]"
-              />
-              <span>I agree to Terms & Privacy Policy</span>
-            </div>
 
             <button
               type="submit"

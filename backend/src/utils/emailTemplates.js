@@ -1,5 +1,6 @@
 /**
  * Premium HTML Email Templates for ChitChat Platform
+ * Aligned with ChitChat's modern dark theme (#050505 / #09090B, #5D5FEF -> #3B82F6 gradients).
  * Designed to render flawlessly across Gmail, Outlook, Apple Mail & mobile email clients.
  */
 
@@ -10,7 +11,7 @@ const getEmailBaseStyles = () => `
     table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
     img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
     table { border-collapse: collapse !important; }
-    body { height: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; background-color: #0B0F19; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+    body { height: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; background-color: #050505; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
 
     /* Custom Responsive Styling */
     @media screen and (max-width: 600px) {
@@ -34,16 +35,16 @@ const getVerificationEmailHtml = ({ name, link }) => {
   <title>Verify Your Email Address - ChitChat</title>
   ${getEmailBaseStyles()}
 </head>
-<body style="margin: 0; padding: 0; background-color: #0B0F19;">
-  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #0B0F19; padding: 40px 0;">
+<body style="margin: 0; padding: 0; background-color: #050505;">
+  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #050505; padding: 40px 0;">
     <tr>
       <td align="center">
         <!-- Main Email Card Container -->
-        <table border="0" cellpadding="0" cellspacing="0" width="560" class="email-container" style="background-color: #111827; border: 1px solid #1E293B; border-radius: 24px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
+        <table border="0" cellpadding="0" cellspacing="0" width="560" class="email-container" style="background-color: #09090B; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);">
           
           <!-- Top Accent Gradient Line -->
           <tr>
-            <td height="6" style="background: linear-gradient(90deg, #7C3AED 0%, #4F46E5 50%, #06B6D4 100%);"></td>
+            <td height="5" style="background: linear-gradient(90deg, #5D5FEF 0%, #3B82F6 50%, #06B6D4 100%);"></td>
           </tr>
 
           <!-- Brand Header -->
@@ -51,8 +52,8 @@ const getVerificationEmailHtml = ({ name, link }) => {
             <td align="center" style="padding: 36px 32px 20px 32px;" class="content-padding">
               <table border="0" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td align="center" style="background: linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%); border-radius: 16px; width: 48px; height: 48px; box-shadow: 0 10px 20px rgba(124, 58, 237, 0.35);">
-                    <span style="font-size: 24px; line-height: 48px; color: #FFFFFF;">💬</span>
+                  <td align="center" style="background: linear-gradient(135deg, #5D5FEF 0%, #3B82F6 100%); border-radius: 16px; width: 44px; height: 44px; box-shadow: 0 10px 20px rgba(93, 95, 239, 0.35);">
+                    <span style="font-size: 22px; line-height: 44px; color: #FFFFFF;">💬</span>
                   </td>
                   <td style="padding-left: 14px;">
                     <span style="font-size: 24px; font-weight: 900; color: #FFFFFF; letter-spacing: -0.5px;">ChitChat</span>
@@ -65,8 +66,8 @@ const getVerificationEmailHtml = ({ name, link }) => {
           <!-- Hero Icon Badge -->
           <tr>
             <td align="center" style="padding: 10px 32px 0 32px;">
-              <div style="display: inline-block; background-color: rgba(124, 58, 237, 0.12); border: 1px solid rgba(124, 58, 237, 0.3); border-radius: 50px; padding: 6px 18px;">
-                <span style="color: #A78BFA; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">✉️ Email Verification</span>
+              <div style="display: inline-block; background-color: rgba(93, 95, 239, 0.12); border: 1px solid rgba(93, 95, 239, 0.3); border-radius: 50px; padding: 6px 18px;">
+                <span style="color: #A5B4FC; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">✉️ Email Verification</span>
               </div>
             </td>
           </tr>
@@ -74,13 +75,13 @@ const getVerificationEmailHtml = ({ name, link }) => {
           <!-- Main Content Body -->
           <tr>
             <td style="padding: 24px 36px 36px 36px;" class="content-padding">
-              <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 800; color: #F8FAFC; text-align: center; letter-spacing: -0.5px;">
+              <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 800; color: #FFFFFF; text-align: center; letter-spacing: -0.5px;">
                 Confirm Your Email Address
               </h1>
-              <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.6; color: #94A3B8; text-align: center;">
-                Hi <strong style="color: #F8FAFC;">${name || 'there'}</strong>,
+              <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.6; color: #A1A1AA; text-align: center;">
+                Hi <strong style="color: #FFFFFF;">${name || 'there'}</strong>,
               </p>
-              <p style="margin: 0 0 28px 0; font-size: 15px; line-height: 1.6; color: #94A3B8; text-align: center;">
+              <p style="margin: 0 0 28px 0; font-size: 15px; line-height: 1.6; color: #A1A1AA; text-align: center;">
                 Welcome to ChitChat! To complete setting up your real-time messaging account and start chatting, please verify your email address.
               </p>
 
@@ -88,7 +89,7 @@ const getVerificationEmailHtml = ({ name, link }) => {
               <table border="0" cellpadding="0" cellspacing="0" width="100%">
                 <tr>
                   <td align="center">
-                    <a href="${link}" target="_blank" class="mobile-btn" style="display: inline-block; background: linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%); color: #FFFFFF !important; font-size: 15px; font-weight: 700; text-decoration: none; padding: 16px 38px; border-radius: 16px; box-shadow: 0 12px 24px -6px rgba(124, 58, 237, 0.5);">
+                    <a href="${link}" target="_blank" class="mobile-btn" style="display: inline-block; background: linear-gradient(135deg, #5D5FEF 0%, #3B82F6 100%); color: #FFFFFF !important; font-size: 15px; font-weight: 700; text-decoration: none; padding: 16px 38px; border-radius: 16px; box-shadow: 0 12px 24px -6px rgba(93, 95, 239, 0.45);">
                       Verify Email Address →
                     </a>
                   </td>
@@ -96,8 +97,8 @@ const getVerificationEmailHtml = ({ name, link }) => {
               </table>
 
               <!-- Fallback Direct Link Box -->
-              <div style="margin-top: 32px; padding: 16px; background-color: #0B0F19; border: 1px solid #1E293B; border-radius: 14px;">
-                <p style="margin: 0 0 6px 0; font-size: 12px; font-weight: 600; color: #64748B;">
+              <div style="margin-top: 32px; padding: 16px; background-color: #111114; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 14px;">
+                <p style="margin: 0 0 6px 0; font-size: 12px; font-weight: 600; color: #71717A;">
                   Having trouble clicking the button? Copy and paste this link into your web browser:
                 </p>
                 <a href="${link}" style="font-size: 12px; color: #38BDF8; word-break: break-all; text-decoration: none;">
@@ -116,11 +117,11 @@ const getVerificationEmailHtml = ({ name, link }) => {
 
           <!-- Footer -->
           <tr>
-            <td style="padding: 24px 36px; background-color: #0B0F19; border-top: 1px solid #1E293B; text-align: center;">
-              <p style="margin: 0 0 6px 0; font-size: 12px; font-weight: 600; color: #64748B;">
+            <td style="padding: 24px 36px; background-color: #050505; border-top: 1px solid rgba(255, 255, 255, 0.08); text-align: center;">
+              <p style="margin: 0 0 6px 0; font-size: 12px; font-weight: 600; color: #71717A;">
                 © 2026 ChitChat Inc. All rights reserved.
               </p>
-              <p style="margin: 0; font-size: 11px; color: #475569;">
+              <p style="margin: 0; font-size: 11px; color: #52525B;">
                 Ultra-fast real-time messaging platform powered by Socket.io & Redis.
               </p>
             </td>
@@ -148,16 +149,16 @@ const getPasswordResetEmailHtml = ({ name, link }) => {
   <title>Reset Your Password - ChitChat</title>
   ${getEmailBaseStyles()}
 </head>
-<body style="margin: 0; padding: 0; background-color: #0B0F19;">
-  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #0B0F19; padding: 40px 0;">
+<body style="margin: 0; padding: 0; background-color: #050505;">
+  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #050505; padding: 40px 0;">
     <tr>
       <td align="center">
         <!-- Main Email Card Container -->
-        <table border="0" cellpadding="0" cellspacing="0" width="560" class="email-container" style="background-color: #111827; border: 1px solid #1E293B; border-radius: 24px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
+        <table border="0" cellpadding="0" cellspacing="0" width="560" class="email-container" style="background-color: #09090B; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);">
           
           <!-- Top Accent Gradient Line -->
           <tr>
-            <td height="6" style="background: linear-gradient(90deg, #F43F5E 0%, #EC4899 50%, #8B5CF6 100%);"></td>
+            <td height="5" style="background: linear-gradient(90deg, #5D5FEF 0%, #3B82F6 50%, #EC4899 100%);"></td>
           </tr>
 
           <!-- Brand Header -->
@@ -165,8 +166,8 @@ const getPasswordResetEmailHtml = ({ name, link }) => {
             <td align="center" style="padding: 36px 32px 20px 32px;" class="content-padding">
               <table border="0" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td align="center" style="background: linear-gradient(135deg, #F43F5E 0%, #EC4899 100%); border-radius: 16px; width: 48px; height: 48px; box-shadow: 0 10px 20px rgba(244, 63, 94, 0.35);">
-                    <span style="font-size: 24px; line-height: 48px; color: #FFFFFF;">🔒</span>
+                  <td align="center" style="background: linear-gradient(135deg, #5D5FEF 0%, #3B82F6 100%); border-radius: 16px; width: 44px; height: 44px; box-shadow: 0 10px 20px rgba(93, 95, 239, 0.35);">
+                    <span style="font-size: 22px; line-height: 44px; color: #FFFFFF;">🔒</span>
                   </td>
                   <td style="padding-left: 14px;">
                     <span style="font-size: 24px; font-weight: 900; color: #FFFFFF; letter-spacing: -0.5px;">ChitChat</span>
@@ -179,8 +180,8 @@ const getPasswordResetEmailHtml = ({ name, link }) => {
           <!-- Hero Icon Badge -->
           <tr>
             <td align="center" style="padding: 10px 32px 0 32px;">
-              <div style="display: inline-block; background-color: rgba(244, 63, 94, 0.12); border: 1px solid rgba(244, 63, 94, 0.3); border-radius: 50px; padding: 6px 18px;">
-                <span style="color: #FDA4AF; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">🔑 Password Reset Request</span>
+              <div style="display: inline-block; background-color: rgba(93, 95, 239, 0.12); border: 1px solid rgba(93, 95, 239, 0.3); border-radius: 50px; padding: 6px 18px;">
+                <span style="color: #A5B4FC; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">🔑 Password Reset Request</span>
               </div>
             </td>
           </tr>
@@ -188,13 +189,13 @@ const getPasswordResetEmailHtml = ({ name, link }) => {
           <!-- Main Content Body -->
           <tr>
             <td style="padding: 24px 36px 36px 36px;" class="content-padding">
-              <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 800; color: #F8FAFC; text-align: center; letter-spacing: -0.5px;">
+              <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 800; color: #FFFFFF; text-align: center; letter-spacing: -0.5px;">
                 Reset Your Password
               </h1>
-              <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.6; color: #94A3B8; text-align: center;">
-                Hi <strong style="color: #F8FAFC;">${name || 'User'}</strong>,
+              <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.6; color: #A1A1AA; text-align: center;">
+                Hi <strong style="color: #FFFFFF;">${name || 'User'}</strong>,
               </p>
-              <p style="margin: 0 0 28px 0; font-size: 15px; line-height: 1.6; color: #94A3B8; text-align: center;">
+              <p style="margin: 0 0 28px 0; font-size: 15px; line-height: 1.6; color: #A1A1AA; text-align: center;">
                 We received a request to reset your ChitChat account password. Click the secure button below to choose your new password.
               </p>
 
@@ -202,7 +203,7 @@ const getPasswordResetEmailHtml = ({ name, link }) => {
               <table border="0" cellpadding="0" cellspacing="0" width="100%">
                 <tr>
                   <td align="center">
-                    <a href="${link}" target="_blank" class="mobile-btn" style="display: inline-block; background: linear-gradient(135deg, #F43F5E 0%, #EC4899 100%); color: #FFFFFF !important; font-size: 15px; font-weight: 700; text-decoration: none; padding: 16px 38px; border-radius: 16px; box-shadow: 0 12px 24px -6px rgba(244, 63, 94, 0.5);">
+                    <a href="${link}" target="_blank" class="mobile-btn" style="display: inline-block; background: linear-gradient(135deg, #5D5FEF 0%, #3B82F6 100%); color: #FFFFFF !important; font-size: 15px; font-weight: 700; text-decoration: none; padding: 16px 38px; border-radius: 16px; box-shadow: 0 12px 24px -6px rgba(93, 95, 239, 0.45);">
                       Reset Password →
                     </a>
                   </td>
@@ -210,11 +211,11 @@ const getPasswordResetEmailHtml = ({ name, link }) => {
               </table>
 
               <!-- Fallback Direct Link Box -->
-              <div style="margin-top: 32px; padding: 16px; background-color: #0B0F19; border: 1px solid #1E293B; border-radius: 14px;">
-                <p style="margin: 0 0 6px 0; font-size: 12px; font-weight: 600; color: #64748B;">
+              <div style="margin-top: 32px; padding: 16px; background-color: #111114; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 14px;">
+                <p style="margin: 0 0 6px 0; font-size: 12px; font-weight: 600; color: #71717A;">
                   Or copy and paste this password reset link into your web browser:
                 </p>
-                <a href="${link}" style="font-size: 12px; color: #F472B6; word-break: break-all; text-decoration: none;">
+                <a href="${link}" style="font-size: 12px; color: #38BDF8; word-break: break-all; text-decoration: none;">
                   ${link}
                 </a>
               </div>
@@ -230,11 +231,11 @@ const getPasswordResetEmailHtml = ({ name, link }) => {
 
           <!-- Footer -->
           <tr>
-            <td style="padding: 24px 36px; background-color: #0B0F19; border-top: 1px solid #1E293B; text-align: center;">
-              <p style="margin: 0 0 6px 0; font-size: 12px; font-weight: 600; color: #64748B;">
+            <td style="padding: 24px 36px; background-color: #050505; border-top: 1px solid rgba(255, 255, 255, 0.08); text-align: center;">
+              <p style="margin: 0 0 6px 0; font-size: 12px; font-weight: 600; color: #71717A;">
                 © 2026 ChitChat Inc. All rights reserved.
               </p>
-              <p style="margin: 0; font-size: 11px; color: #475569;">
+              <p style="margin: 0; font-size: 11px; color: #52525B;">
                 Ultra-fast real-time messaging platform powered by Socket.io & Redis.
               </p>
             </td>
