@@ -79,6 +79,26 @@ const sendMessage = async (senderId, payload) => {
     { $inc: { unreadCount: 1 } },
   );
 
+  // Real-time Socket Emission to all participants' user rooms so Conversation List updates instantly at top
+  try {
+    const { getIO } = require("../../socket");
+    const io = getIO();
+    if (io && participants) {
+      for (const p of participants) {
+        const pUserId = p.userId?._id || p.userId;
+        if (pUserId) {
+          io.to(`user:${pUserId.toString()}`).emit("conversation:updated", {
+            conversationId: conversationId.toString(),
+            lastMessage: populatedMessage,
+            updatedAt: populatedMessage.createdAt || new Date(),
+          });
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Failed to emit socket conversation:updated to user rooms", err);
+  }
+
   const sender = await User.findById(senderId).select("username displayName");
 
   const senderName = sender?.displayName || sender?.username || "Someone";

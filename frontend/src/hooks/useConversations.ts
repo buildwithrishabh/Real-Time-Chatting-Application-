@@ -28,35 +28,56 @@ export function useConversations() {
     const socket = getSocket();
     if (!socket) return;
 
-    const handleNewMessage = (message: any) => {
-      if (!message?.conversationId) return;
+    const handleConversationUpdated = (data: any) => {
+      if (!data) return;
+
+      const targetConvId = (
+        typeof data.conversationId === 'object' && data.conversationId?._id
+          ? data.conversationId._id
+          : data.conversationId || data.chatId
+      )?.toString();
+
+      if (!targetConvId) return;
+
+      const lastMsg = data.lastMessage || (data.content ? data : null);
+      const senderIdStr = (
+        typeof lastMsg?.senderId === 'object' && lastMsg?.senderId?._id
+          ? lastMsg.senderId._id
+          : lastMsg?.senderId || lastMsg?.sender?._id || lastMsg?.sender?.id
+      )?.toString();
 
       queryClient.setQueryData<any>(['conversations'], (oldData: any) => {
-        if (!oldData) return oldData;
+        if (!oldData || !oldData.pages) return oldData;
 
-        const updatedAt = message.createdAt || new Date().toISOString();
+        const updatedAt = data.updatedAt || lastMsg?.createdAt || new Date().toISOString();
 
-        // Find the updated conversation (removed from wherever it lives) and
-        // optimistically bump / clear the current user's unread count.
         let updatedConv: any = null;
+
+        // Remove conversation from whichever page it currently is in
         const pages = oldData.pages.map((page: any) => ({
           ...page,
-          items: page.items.filter((conv: any) => {
-            if (conv._id !== message.conversationId) return true;
+          items: (page.items || []).filter((conv: any) => {
+            const convIdStr = (conv._id || conv.id)?.toString();
+            if (convIdStr !== targetConvId) return true;
+
+            const isSenderMe = senderIdStr === currentUserId;
+            const isActive = activeConversationId === targetConvId;
 
             updatedConv = {
               ...conv,
-              lastMessageId: message._id,
-              lastMessage: message,
+              lastMessageId: lastMsg?._id || lastMsg?.id || conv.lastMessageId,
+              lastMessage: lastMsg || conv.lastMessage,
               updatedAt,
               participants: (conv.participants || []).map((p: any) => {
                 if (!currentUserId) return p;
-                const pId = typeof p?.userId === 'string'
-                  ? p.userId
-                  : p?.userId?._id || p?.userId?.id;
+                const pId = (
+                  typeof p?.userId === 'string'
+                    ? p.userId
+                    : p?.userId?._id || p?.userId?.id
+                )?.toString();
                 if (pId !== currentUserId) return p;
-                const isActive = activeConversationId === message.conversationId;
-                return message.senderId !== currentUserId && !isActive
+
+                return !isSenderMe && !isActive
                   ? { ...p, unreadCount: (p.unreadCount || 0) + 1 }
                   : { ...p, unreadCount: 0 };
               }),
@@ -65,21 +86,24 @@ export function useConversations() {
           }),
         }));
 
-        // Move the updated conversation to the top of the first page so the
-        // preview ordering always matches the backend (sorted by updatedAt desc).
+        // Move the updated conversation to top (index 0 of first page)
         if (updatedConv && pages.length > 0) {
           pages[0] = { ...pages[0], items: [updatedConv, ...pages[0].items] };
+          return { ...oldData, pages };
+        } else if (!updatedConv) {
+          // If conversation is not found in cache (e.g. brand new chat), invalidate query to fetch from API
+          queryClient.invalidateQueries({ queryKey: ['conversations'] });
         }
 
         return { ...oldData, pages };
       });
-
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
     };
 
-    socket.on('message:new', handleNewMessage);
+    socket.on('conversation:updated', handleConversationUpdated);
+    socket.on('message:new', handleConversationUpdated);
     return () => {
-      socket.off('message:new', handleNewMessage);
+      socket.off('conversation:updated', handleConversationUpdated);
+      socket.off('message:new', handleConversationUpdated);
     };
   }, [isConnected, queryClient, activeConversationId, currentUserId]);
 
