@@ -58,10 +58,21 @@ const deleteNotification = async (req, res, next) => {
   }
 };
 
+const deleteAllNotifications = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const result = await notificationService.deleteAllNotifications(userId);
+    res.status(StatusCodes.OK).json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getNotifications,
   getUnreadCount,
   markAsRead,
   markAllAsRead,
   deleteNotification,
+  deleteAllNotifications,
 };

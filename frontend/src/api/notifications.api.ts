@@ -39,4 +39,9 @@ export const notificationsApi = {
     const res = await client.delete<ApiSuccess<{ message: string }>>(`/notifications/${id}`);
     return res.data.data;
   },
+
+  deleteAllNotifications: async (): Promise<{ message: string }> => {
+    const res = await client.delete<ApiSuccess<{ message: string }>>('/notifications/clear-all');
+    return res.data.data;
+  },
 };

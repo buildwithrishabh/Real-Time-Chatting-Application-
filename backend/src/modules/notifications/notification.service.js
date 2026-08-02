@@ -120,6 +120,11 @@ const deleteNotification = async (notificationId, userId) => {
   return { message: "Notification deleted successfully" };
 };
 
+const deleteAllNotifications = async (userId) => {
+  await notificationRepository.deleteAll(userId);
+  return { message: "All notifications deleted successfully" };
+};
+
 module.exports = {
   notifyUser,
   getUserNotifications,
@@ -127,4 +132,5 @@ module.exports = {
   markNotificationAsRead,
   markAllNotificationsAsRead,
   deleteNotification,
+  deleteAllNotifications,
 };

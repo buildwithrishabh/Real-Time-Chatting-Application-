@@ -58,6 +58,9 @@ const deleteById = async (notificationId, recipientId) => {
   });
 };
 
+const deleteAll = async (recipientId) => {
+  return await Notification.deleteMany({ recipient: recipientId });
+};
 
 module.exports = {
   create,
@@ -66,4 +69,5 @@ module.exports = {
   markAsRead,
   markAllAsRead,
   deleteById,
+  deleteAll,
 };

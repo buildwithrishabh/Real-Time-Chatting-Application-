@@ -100,6 +100,17 @@ export function NotificationSidebar() {
     }
   };
 
+  const handleDeleteAll = async () => {
+    if (notifications.length === 0) return;
+    try {
+      await notificationsApi.deleteAllNotifications();
+      setNotifications([]);
+      toast.success('All notifications cleared');
+    } catch {
+      toast.error('Failed to clear notifications');
+    }
+  };
+
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     try {
@@ -185,8 +196,20 @@ export function NotificationSidebar() {
                 onClick={handleMarkAllAsRead}
                 className="p-1.5 text-xs font-bold text-[#5D5FEF] hover:bg-white/5 rounded-xl transition-colors cursor-pointer"
                 title="Mark all as read"
+                aria-label="Mark all notifications as read"
               >
                 <CheckCheck className="w-4.5 h-4.5" />
+              </button>
+            )}
+
+            {notifications.length > 0 && (
+              <button
+                onClick={handleDeleteAll}
+                className="p-1.5 text-xs font-bold text-rose-400 hover:text-rose-300 hover:bg-rose-950/40 rounded-xl transition-colors cursor-pointer"
+                title="Clear all notifications"
+                aria-label="Clear all notifications"
+              >
+                <Trash2 className="w-4.5 h-4.5" />
               </button>
             )}
 
