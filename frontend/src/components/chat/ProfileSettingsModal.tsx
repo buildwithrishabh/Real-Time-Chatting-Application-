@@ -13,6 +13,8 @@ import {
   Smartphone,
   Check,
   Palette,
+  ShieldAlert,
+  UserX,
 } from 'lucide-react';
 import { useUIStore } from '../../store/ui.store';
 import type { AccentColor } from '../../store/ui.store';
@@ -25,7 +27,7 @@ import axios from 'axios';
 import { toast } from 'sonner';
 import { cn } from '../../lib/utils';
 
-type SettingsTab = 'profile' | 'appearance' | 'security' | 'notifications';
+type SettingsTab = 'profile' | 'appearance' | 'privacy' | 'security' | 'notifications';
 
 export function ProfileSettingsModal() {
   const { isProfileModalOpen, setProfileModalOpen, darkMode, toggleDarkMode, accentColor, setAccentColor } = useUIStore();
@@ -39,7 +41,47 @@ export function ProfileSettingsModal() {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [blockedUsers, setBlockedUsers] = useState<any[]>([]);
+  const [loadingBlocked, setLoadingBlocked] = useState(false);
+  const [unblockingId, setUnblockingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const fetchBlockedUsers = async () => {
+    try {
+      setLoadingBlocked(true);
+      const list = await usersApi.listBlocked();
+      setBlockedUsers(list || []);
+    } catch {
+      toast.error('Failed to load blocked users');
+    } finally {
+      setLoadingBlocked(false);
+    }
+  };
+
+  const handleUnblock = async (userId: string) => {
+    try {
+      setUnblockingId(userId);
+      await usersApi.unblockUser(userId);
+      setBlockedUsers((prev) =>
+        prev.filter((item) => {
+          const targetUser = item.blockedId && typeof item.blockedId === 'object' ? item.blockedId : item;
+          const targetId = targetUser._id || targetUser.id || (typeof item.blockedId === 'string' ? item.blockedId : item._id);
+          return targetId !== userId;
+        })
+      );
+      toast.success('User unblocked successfully');
+    } catch {
+      toast.error('Failed to unblock user');
+    } finally {
+      setUnblockingId(null);
+    }
+  };
+
+  useEffect(() => {
+    if (isProfileModalOpen && activeTab === 'privacy') {
+      fetchBlockedUsers();
+    }
+  }, [isProfileModalOpen, activeTab]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -175,6 +217,20 @@ export function ProfileSettingsModal() {
             </button>
 
             <button
+              onClick={() => setActiveTab('privacy')}
+              className={cn(
+                'px-3.5 py-2 rounded-xl whitespace-nowrap transition-colors flex items-center gap-1.5 cursor-pointer',
+                activeTab === 'privacy'
+                  ? 'bg-gradient-to-tr from-[#5D5FEF] to-[#3B82F6] text-white shadow-sm'
+                  : 'bg-[#111114] border border-white/5 text-zinc-400'
+              )}
+              aria-label="Switch to privacy tab"
+            >
+              <ShieldAlert className="w-3.5 h-3.5" />
+              <span>Privacy & Blocking</span>
+            </button>
+
+            <button
               onClick={() => setActiveTab('security')}
               className={cn(
                 'px-3.5 py-2 rounded-xl whitespace-nowrap transition-colors flex items-center gap-1.5 cursor-pointer',
@@ -236,6 +292,20 @@ export function ProfileSettingsModal() {
           >
             <Palette className="w-4 h-4" />
             <span>Appearance & Theme</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('privacy')}
+            className={cn(
+              'flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold text-sm transition-colors text-left cursor-pointer',
+              activeTab === 'privacy'
+                ? 'bg-[#18181C] text-white border-l-2 border-[#5D5FEF]'
+                : 'text-zinc-400 hover:bg-[#111114] hover:text-white'
+            )}
+            aria-label="Privacy and blocking settings"
+          >
+            <ShieldAlert className="w-4 h-4 text-rose-400" />
+            <span>Privacy & Blocking</span>
           </button>
 
           <button
@@ -455,7 +525,77 @@ export function ProfileSettingsModal() {
             </div>
           )}
 
-          {/* TAB 3: SECURITY */}
+          {/* TAB 3: PRIVACY & BLOCKING */}
+          {activeTab === 'privacy' && (
+            <div className="space-y-4">
+              <div className="p-4 rounded-2xl bg-[#111114] border border-white/10">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                    <UserX className="w-4 h-4 text-rose-400" /> Blocked Contacts ({blockedUsers.length})
+                  </h4>
+                </div>
+
+                {loadingBlocked ? (
+                  <div className="flex items-center justify-center py-8 text-zinc-400 gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin text-[#5D5FEF]" />
+                    <span className="text-xs font-medium">Loading blocked users...</span>
+                  </div>
+                ) : blockedUsers.length === 0 ? (
+                  <div className="text-center py-8 bg-[#09090B] rounded-2xl border border-dashed border-white/10">
+                    <UserCheck className="w-8 h-8 text-emerald-400 mx-auto mb-2 opacity-80" />
+                    <p className="text-xs font-bold text-white">No Blocked Users</p>
+                    <p className="text-[11px] text-zinc-400 mt-1">You haven't blocked anyone yet.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1">
+                    {blockedUsers.map((item) => {
+                      const targetUser = item.blockedId && typeof item.blockedId === 'object' ? item.blockedId : item;
+                      const userId = targetUser._id || targetUser.id || (typeof item.blockedId === 'string' ? item.blockedId : item._id);
+                      const name = targetUser.displayName || targetUser.username || 'Blocked User';
+                      const username = targetUser.username;
+                      const avatar = targetUser.avatarUrl;
+
+                      return (
+                        <div
+                          key={item._id || userId}
+                          className="flex items-center justify-between p-3 rounded-xl bg-[#18181C] border border-white/5 hover:border-white/10 transition-colors"
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            {avatar ? (
+                              <img src={avatar} alt={name} className="w-8 h-8 rounded-full object-cover border border-white/10" />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#5D5FEF] to-[#3B82F6] text-white font-bold flex items-center justify-center text-xs">
+                                {name.slice(0, 2).toUpperCase()}
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <p className="text-xs font-bold text-white truncate">{name}</p>
+                              {username && <p className="text-[10px] text-zinc-400 truncate">@{username}</p>}
+                            </div>
+                          </div>
+
+                          <button
+                            onClick={() => handleUnblock(userId)}
+                            disabled={unblockingId === userId}
+                            className="px-3 py-1 bg-[#111114] hover:bg-white/10 text-white text-xs font-bold rounded-xl border border-white/10 transition-all flex items-center gap-1.5 disabled:opacity-50 flex-shrink-0 cursor-pointer"
+                            aria-label={`Unblock ${name}`}
+                          >
+                            {unblockingId === userId ? (
+                              <Loader2 className="w-3 h-3 animate-spin text-[#5D5FEF]" />
+                            ) : (
+                              'Unblock'
+                            )}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* TAB 4: SECURITY */}
           {activeTab === 'security' && (
             <div className="space-y-4">
               <div className="p-4 rounded-2xl bg-[#111114] border border-white/10 space-y-2">

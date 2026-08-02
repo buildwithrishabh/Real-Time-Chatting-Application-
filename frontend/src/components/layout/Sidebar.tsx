@@ -62,7 +62,7 @@ export function Sidebar() {
 
   const handleNavClick = (id: string) => {
     if (id === 'settings') {
-      setProfileModalOpen(true);
+      setActiveTab('settings');
     } else if (id === 'notifications') {
       setNotificationOpen(true);
       setUnreadNotifCount(0);
@@ -89,7 +89,11 @@ export function Sidebar() {
 
           {/* User Profile Card */}
           <div className="relative">
-            <div className="w-full flex items-center justify-between p-2 rounded-2xl border border-transparent hover:border-white/5 transition-all">
+            <div
+              onClick={() => setProfileModalOpen(true)}
+              className="w-full flex items-center justify-between p-2 rounded-2xl border border-transparent hover:border-white/5 hover:bg-[#18181C] transition-all cursor-pointer"
+              title="Profile Settings"
+            >
               <div className="flex items-center gap-3 min-w-0">
                 <div className="relative flex-shrink-0">
                   {user?.avatarUrl ? (

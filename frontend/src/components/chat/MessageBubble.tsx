@@ -33,22 +33,35 @@ export function MessageBubble({ message, isOwn, onReact, onUnreact, onEdit, onDe
 
   const handleFileDownload = async (e: React.MouseEvent) => {
     e.preventDefault();
-    if (fileObj?._id) {
-      try {
+    e.stopPropagation();
+    try {
+      if (fileObj?._id) {
         const data = await filesApi.getDownloadUrl(fileObj._id);
         if (data?.downloadUrl) {
-          window.open(data.downloadUrl, '_blank');
+          const a = document.createElement('a');
+          a.href = data.downloadUrl;
+          a.download = data.filename || 'attachment';
+          a.target = '_blank';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
           return;
         }
-      } catch (err) {
-        console.error('Download via API failed, using fallback:', err);
       }
+    } catch (err) {
+      console.error('Download via API failed, using fallback:', err);
     }
     if (fileUrl) {
       const fallbackUrl = fileUrl.includes('/upload/')
         ? fileUrl.replace('/upload/', '/upload/fl_attachment/')
         : fileUrl;
-      window.open(fallbackUrl, '_blank');
+      const a = document.createElement('a');
+      a.href = fallbackUrl;
+      a.download = 'attachment';
+      a.target = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     }
   };
 
@@ -157,30 +170,60 @@ export function MessageBubble({ message, isOwn, onReact, onUnreact, onEdit, onDe
             {fileUrl && !message.isDeletedForEveryone && (
               <div className="mb-2 overflow-hidden rounded-xl">
                 {isImage ? (
-                  <button
-                    onClick={() => setLightboxOpen(true)}
-                    className="block w-full"
-                    aria-label="View attachment"
-                  >
-                    <img
-                      src={fileUrl}
-                      alt="Attachment"
-                      className="max-h-72 w-full object-cover rounded-xl hover:opacity-95 transition-opacity cursor-pointer"
-                      loading="lazy"
-                    />
-                  </button>
+                  <div className="relative group/media">
+                    <button
+                      onClick={() => setLightboxOpen(true)}
+                      className="block w-full"
+                      aria-label="View attachment"
+                    >
+                      <img
+                        src={fileUrl}
+                        alt="Attachment"
+                        className="max-h-72 w-full object-cover rounded-xl hover:opacity-95 transition-opacity cursor-pointer"
+                        loading="lazy"
+                      />
+                    </button>
+                    <button
+                      onClick={handleFileDownload}
+                      className="absolute top-2 right-2 p-2 rounded-full bg-black/60 hover:bg-black/90 text-white backdrop-blur-md transition-all shadow-md cursor-pointer opacity-80 hover:opacity-100"
+                      title="Download image"
+                      aria-label="Download image"
+                    >
+                      <Download className="w-4 h-4 text-white" />
+                    </button>
+                  </div>
                 ) : isVideo ? (
-                  <video
-                    src={fileUrl}
-                    controls
-                    className="max-h-72 w-full rounded-xl"
-                  />
+                  <div className="relative group/media">
+                    <video
+                      src={fileUrl}
+                      controls
+                      className="max-h-72 w-full rounded-xl"
+                    />
+                    <button
+                      onClick={handleFileDownload}
+                      className="absolute top-2 right-2 p-2 rounded-full bg-black/60 hover:bg-black/90 text-white backdrop-blur-md transition-all shadow-md cursor-pointer z-10"
+                      title="Download video"
+                      aria-label="Download video"
+                    >
+                      <Download className="w-4 h-4 text-white" />
+                    </button>
+                  </div>
                 ) : isAudio ? (
-                  <audio
-                    src={fileUrl}
-                    controls
-                    className="w-full mt-1"
-                  />
+                  <div className="flex items-center gap-2">
+                    <audio
+                      src={fileUrl}
+                      controls
+                      className="w-full mt-1 flex-1"
+                    />
+                    <button
+                      onClick={handleFileDownload}
+                      className="p-2 rounded-xl bg-[#111114] border border-white/10 hover:bg-white/10 text-white transition-all cursor-pointer flex-shrink-0"
+                      title="Download audio"
+                      aria-label="Download audio"
+                    >
+                      <Download className="w-4 h-4 text-[#5D5FEF]" />
+                    </button>
+                  </div>
                 ) : (
                   <button
                     onClick={handleFileDownload}
@@ -383,20 +426,30 @@ export function MessageBubble({ message, isOwn, onReact, onUnreact, onEdit, onDe
       {/* Image lightbox */}
       {lightboxOpen && fileUrl && (
         <div
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4"
           onClick={() => setLightboxOpen(false)}
         >
-          <button
-            onClick={() => setLightboxOpen(false)}
-            className="absolute top-4 right-4 p-2 text-white/80 hover:text-white rounded-full hover:bg-white/10"
-            aria-label="Close image preview"
-          >
-            <X className="w-6 h-6" />
-          </button>
+          <div className="absolute top-4 right-4 flex items-center gap-2 z-50">
+            <button
+              onClick={handleFileDownload}
+              className="flex items-center gap-2 px-4 py-2 bg-[#18181C] hover:bg-[#222228] text-white border border-white/10 rounded-xl text-xs font-bold transition-all shadow-lg cursor-pointer"
+              title="Download image"
+            >
+              <Download className="w-4 h-4 text-[#5D5FEF]" />
+              <span>Download</span>
+            </button>
+            <button
+              onClick={() => setLightboxOpen(false)}
+              className="p-2 text-zinc-400 hover:text-white rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
+              aria-label="Close image preview"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
           <img
             src={fileUrl}
             alt="Full size preview"
-            className="max-w-full max-h-full object-contain rounded-2xl"
+            className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           />
         </div>

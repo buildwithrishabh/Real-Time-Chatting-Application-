@@ -12,7 +12,6 @@ export function MobileBottomNav() {
   const {
     activeTab,
     setActiveTab,
-    setProfileModalOpen,
     setNotificationOpen,
   } = useUIStore();
   const activeConversationId = useChatStore((s) => s.activeConversationId);
@@ -54,7 +53,7 @@ export function MobileBottomNav() {
 
   const handleTabClick = (id: NavTab) => {
     if (id === 'settings') {
-      setProfileModalOpen(true);
+      setActiveTab('settings');
     } else if (id === 'notifications') {
       setNotificationOpen(true);
       setUnreadCount(0);
