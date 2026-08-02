@@ -55,6 +55,7 @@ const deleteForEveryone = async (messageId) => {
       $set: {
         content: "This message was deleted",
         isDeletedForEveryone: true,
+        fileId: null,
       },
     },
     { new: true },

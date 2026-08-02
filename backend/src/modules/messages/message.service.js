@@ -213,6 +213,34 @@ const deleteMessage = async (userId, messageId, type = "everyone") => {
         StatusCodes.FORBIDDEN,
       );
     }
+
+    // Clean up attached file from Cloudinary and DB if present
+    if (message.fileId) {
+      try {
+        const File = require("../../model/File");
+        const cloudinary = require("../../config/cloudinary");
+        const fileDoc = await File.findById(message.fileId);
+
+        if (fileDoc && fileDoc.publicId) {
+          const mime = fileDoc.mimeType || "";
+          let resourceType = "image";
+          if (mime.startsWith("video/")) {
+            resourceType = "video";
+          } else if (!mime.startsWith("image/")) {
+            resourceType = "raw";
+          }
+
+          await cloudinary.uploader.destroy(fileDoc.publicId, {
+            resource_type: resourceType,
+          });
+          await File.findByIdAndDelete(message.fileId);
+        }
+      } catch (err) {
+        // Log error silently so message deletion still succeeds
+        console.error("Cloudinary file deletion error:", err.message);
+      }
+    }
+
     return messageRepository.deleteForEveryone(messageId);
   } else if (type === "me") {
     return messageRepository.deleteForMe(messageId, userId);

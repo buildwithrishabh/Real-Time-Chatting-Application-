@@ -154,7 +154,7 @@ export function MessageBubble({ message, isOwn, onReact, onUnreact, onEdit, onDe
                 : 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200/80 dark:border-slate-700/80 rounded-bl-xs'
             )}
           >
-            {fileUrl && (
+            {fileUrl && !message.isDeletedForEveryone && (
               <div className="mb-2 overflow-hidden rounded-xl">
                 {isImage ? (
                   <button
