@@ -60,11 +60,11 @@ Whether you're sending direct 1-on-1 messages, managing group conversations with
 | ⚡ **Real-Time Engine** | **Sub-Second Messaging** | Real-time message dispatching & delivery powered by Socket.io, synchronized across multiple backend instances via Redis Pub/Sub. |
 | 🟢 **Presence & Receipts** | **Live Presence & Typing** | Heartbeat-based online/offline status detection, dynamic live typing indicators, and message delivery/read status receipts (`delivered`, `read`). |
 | 👥 **Conversations** | **Direct & Group Chats** | Instant 1-on-1 private messaging and feature-complete group chats with member management and admin controls. |
-| 🔔 **Notifications** | **In-App Notification Center** | Real-time push notifications for incoming messages, group invitations, and system updates, with unread counters and batch read options. |
+| 🔔 **Notifications** | **In-App Notification Center** | Real-time push notifications for incoming messages, group invitations, and system updates, with unread counters, batch read, and clear-all capabilities. |
 | ☁️ **Media Attachments** | **Cloud Media Uploads** | Direct browser-to-cloud signed uploads via Cloudinary for images, videos, audio recordings, and document files with security scanning. |
-| 🔐 **Authentication** | **Enterprise Auth & Security** | JWT Access & Refresh token rotation, HTTP-only secure cookie sessions, device tracking, email verification, and password reset flows. |
+| 🔐 **Authentication** | **Enterprise Auth & Security** | JWT Access & Refresh token rotation, HTTP-only secure cookie sessions, device tracking, password visibility toggles, dark-themed verification & password reset flows. |
 | 🚫 **Privacy & Control** | **User Blocking & Settings** | Granular user blocking/unblocking, configurable last-seen visibility, online presence privacy controls, and custom profiles. |
-| 🎨 **Modern Frontend UI** | **Sleek React 19 Interface** | Built with Vite, React 19, TypeScript, Tailwind CSS v4, Lucide icons, virtualized message rendering, and toast alerts with Sonner. |
+| 🎨 **Modern Frontend UI** | **Sleek React 19 Interface** | Built with Vite, React 19, TypeScript, Tailwind CSS v4, dark glassmorphism design system (`#050505`/`#09090B`), Lucide icons, virtualized message rendering, and toast alerts with Sonner. |
 
 ---
 
@@ -224,7 +224,8 @@ All REST API endpoints are namespaced under `/api/v1`.
 | `GET` | `/unread-count` | Get total count of unread notifications | ✅ |
 | `PATCH` | `/read-all` | Mark all notifications as read | ✅ |
 | `PATCH` | `/:id/read` | Mark a specific notification as read | ✅ |
-| `DELETE` | `/:id` | Delete a notification | ✅ |
+| `DELETE` | `/clear-all` | Clear all notifications for authenticated user | ✅ |
+| `DELETE` | `/:id` | Delete a specific notification | ✅ |
 
 ### 📁 Files & Uploads (`/api/v1/files`)
 
