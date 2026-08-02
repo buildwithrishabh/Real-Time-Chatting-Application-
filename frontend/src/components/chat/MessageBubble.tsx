@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Check, CheckCheck, Smile, MoreHorizontal, Pencil, Trash2, FileText, ExternalLink, X, UserX, Download } from 'lucide-react';
+import { Check, CheckCheck, Smile, MoreHorizontal, Pencil, Trash2, FileText, X, UserX, Download } from 'lucide-react';
 import type { Message } from '../../types/message';
 import { formatMessageTime } from '../../lib/format';
 import { cn } from '../../lib/utils';

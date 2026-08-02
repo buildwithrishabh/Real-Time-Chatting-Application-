@@ -1,8 +1,9 @@
-import { useState } from 'react';
-import { Moon, Sun, LogOut, Palette, MessageSquare, User, Shield, ChevronRight, Loader2, Check, Settings as SettingsIcon } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Moon, Sun, LogOut, Palette, MessageSquare, User, Shield, ChevronRight, Loader2, Check, Settings as SettingsIcon, ShieldAlert, UserX, UserCheck } from 'lucide-react';
 import { useAuthStore } from '../../store/auth.store';
 import { useUIStore, ACCENT_PALETTE, type AccentColor } from '../../store/ui.store';
 import { useAuth } from '../../hooks/useAuth';
+import { usersApi } from '../../api/users.api';
 import { toast } from 'sonner';
 import { cn } from '../../lib/utils';
 
@@ -20,10 +21,51 @@ export function SettingsPage() {
   const { darkMode, toggleDarkMode, accentColor, setAccentColor, setActiveTab, setProfileModalOpen } = useUIStore();
   const { logout, isLoggingOut } = useAuth();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [activeSection, setActiveSection] = useState<'appearance' | 'chat' | 'account'>('appearance');
+  const [activeSection, setActiveSection] = useState<'appearance' | 'chat' | 'privacy' | 'account'>('appearance');
+
+  const [blockedUsers, setBlockedUsers] = useState<any[]>([]);
+  const [loadingBlocked, setLoadingBlocked] = useState(false);
+  const [unblockingId, setUnblockingId] = useState<string | null>(null);
 
   const [sendOnEnter, setSendOnEnter] = useState(() => localStorage.getItem('sendOnEnter') !== 'false');
   const [readReceipts, setReadReceipts] = useState(() => localStorage.getItem('readReceipts') !== 'false');
+
+  const loadBlockedUsers = async () => {
+    setLoadingBlocked(true);
+    try {
+      const list = await usersApi.listBlocked();
+      setBlockedUsers(Array.isArray(list) ? list : []);
+    } catch {
+      toast.error('Failed to load blocked users');
+    } finally {
+      setLoadingBlocked(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeSection === 'privacy') {
+      loadBlockedUsers();
+    }
+  }, [activeSection]);
+
+  const handleUnblock = async (userId: string) => {
+    setUnblockingId(userId);
+    try {
+      await usersApi.unblockUser(userId);
+      toast.success('User unblocked successfully');
+      setBlockedUsers((prev) =>
+        prev.filter((item) => {
+          const target = item.blockedId && typeof item.blockedId === 'object' ? item.blockedId : item;
+          const id = target._id || target.id || (typeof item.blockedId === 'string' ? item.blockedId : item._id);
+          return id !== userId;
+        })
+      );
+    } catch {
+      toast.error('Failed to unblock user');
+    } finally {
+      setUnblockingId(null);
+    }
+  };
 
   const toggleSendOnEnter = () => {
     const next = !sendOnEnter;
@@ -42,6 +84,7 @@ export function SettingsPage() {
   const sections = [
     { id: 'appearance' as const, label: 'Appearance', icon: Palette },
     { id: 'chat' as const, label: 'Chat Settings', icon: MessageSquare },
+    { id: 'privacy' as const, label: 'Privacy & Blocking', icon: ShieldAlert },
     { id: 'account' as const, label: 'Account', icon: User },
   ];
 
@@ -259,6 +302,85 @@ export function SettingsPage() {
                   )}
                 />
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* === Privacy & Blocking Section === */}
+        {activeSection === 'privacy' && (
+          <div className="space-y-6 animate-fade-in">
+            <div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <ShieldAlert className="w-5 h-5 text-violet-500" /> Privacy & Blocked Users
+              </h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                Manage contacts you have blocked from messaging or interacting with you
+              </p>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <UserX className="w-4 h-4 text-rose-500" /> Blocked Contacts ({blockedUsers.length})
+                </h4>
+              </div>
+
+              {loadingBlocked ? (
+                <div className="flex items-center justify-center py-10 text-slate-400 gap-2">
+                  <Loader2 className="w-5 h-5 animate-spin text-violet-500" />
+                  <span className="text-sm font-medium">Loading blocked users...</span>
+                </div>
+              ) : blockedUsers.length === 0 ? (
+                <div className="text-center py-10 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
+                  <UserCheck className="w-10 h-10 text-emerald-500 mx-auto mb-2 opacity-80" />
+                  <p className="text-sm font-bold text-slate-700 dark:text-slate-300">No Blocked Users</p>
+                  <p className="text-xs text-slate-400 mt-1">You haven't blocked anyone yet. Blocked contacts will appear here.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {blockedUsers.map((item) => {
+                    const targetUser = item.blockedId && typeof item.blockedId === 'object' ? item.blockedId : item;
+                    const userId = targetUser._id || targetUser.id || (typeof item.blockedId === 'string' ? item.blockedId : item._id);
+                    const name = targetUser.displayName || targetUser.username || 'Blocked User';
+                    const username = targetUser.username;
+                    const avatar = targetUser.avatarUrl;
+
+                    return (
+                      <div
+                        key={item._id || userId}
+                        className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          {avatar ? (
+                            <img src={avatar} alt={name} className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-700" />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-violet-600 to-indigo-600 text-white font-bold flex items-center justify-center text-sm">
+                              {name.slice(0, 2).toUpperCase()}
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{name}</p>
+                            {username && <p className="text-xs text-slate-400 truncate">@{username}</p>}
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => handleUnblock(userId)}
+                          disabled={unblockingId === userId}
+                          className="px-3.5 py-1.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 disabled:opacity-50 flex-shrink-0 cursor-pointer"
+                          aria-label={`Unblock ${name}`}
+                        >
+                          {unblockingId === userId ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            'Unblock'
+                          )}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         )}
