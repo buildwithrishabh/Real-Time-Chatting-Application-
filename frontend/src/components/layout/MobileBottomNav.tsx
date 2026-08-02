@@ -64,7 +64,7 @@ export function MobileBottomNav() {
   };
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border-t border-slate-200/90 dark:border-slate-800 px-2 py-1.5 flex items-center justify-around shadow-lg">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#09090B]/90 backdrop-blur-xl border-t border-white/10 px-2 py-1.5 flex items-center justify-around shadow-2xl">
       {items.map((item) => {
         const Icon = item.icon;
         const isActive = activeTab === item.id;
@@ -75,10 +75,10 @@ export function MobileBottomNav() {
             key={item.id}
             onClick={() => handleTabClick(item.id)}
             className={cn(
-              'flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-2xl transition-all duration-200 relative active:scale-95',
+              'flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-2xl transition-all duration-200 relative active:scale-95 cursor-pointer',
               isActive
-                ? 'text-violet-600 dark:text-violet-400 font-bold'
-                : 'text-slate-500 dark:text-slate-400 font-semibold hover:text-slate-900 dark:hover:text-white'
+                ? 'text-[#5D5FEF] font-bold'
+                : 'text-zinc-400 font-semibold hover:text-white'
             )}
           >
             <div className="relative">
@@ -89,7 +89,7 @@ export function MobileBottomNav() {
                 )}
               />
               {isNotif && unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1.5 w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-extrabold flex items-center justify-center border border-white dark:border-[#111827] animate-pulse">
+                <span className="absolute -top-1 -right-1.5 w-4 h-4 rounded-full bg-gradient-to-tr from-[#5D5FEF] to-[#3B82F6] text-white text-[9px] font-extrabold flex items-center justify-center border border-[#09090B] animate-pulse">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}

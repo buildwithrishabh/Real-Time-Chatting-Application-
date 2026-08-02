@@ -151,7 +151,7 @@ export function MessageBubble({ message, isOwn, onReact, onUnreact, onEdit, onDe
               'relative px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-xs transition-all duration-200',
               isOwn
                 ? 'sent-bubble rounded-br-xs'
-                : 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200/80 dark:border-slate-700/80 rounded-bl-xs'
+                : 'bg-[#181818] text-white border border-white/5 rounded-bl-xs'
             )}
           >
             {fileUrl && !message.isDeletedForEveryone && (
@@ -184,17 +184,17 @@ export function MessageBubble({ message, isOwn, onReact, onUnreact, onEdit, onDe
                 ) : (
                   <button
                     onClick={handleFileDownload}
-                    className="w-full text-left flex items-center gap-3 p-3 bg-slate-100 dark:bg-slate-900 rounded-xl hover:opacity-90 transition-opacity cursor-pointer"
+                    className="w-full text-left flex items-center gap-3 p-3 bg-[#111114] border border-white/10 rounded-xl hover:bg-white/10 transition-all cursor-pointer"
                     aria-label="Download file attachment"
                   >
-                    <FileText className="w-6 h-6 text-violet-500 flex-shrink-0" />
+                    <FileText className="w-5 h-5 text-[#5D5FEF] flex-shrink-0" />
                     <div className="min-w-0 flex-1">
-                      <span className="text-xs font-semibold truncate block">
+                      <span className="text-xs font-semibold truncate block text-white">
                         {message.type === 'pdf' ? 'PDF Document' : 'Document / File'}
                       </span>
-                      <span className="text-[10px] text-slate-400">Click to download</span>
+                      <span className="text-[10px] text-zinc-400">Click to download</span>
                     </div>
-                    <Download className="w-4 h-4 text-violet-500 flex-shrink-0" />
+                    <Download className="w-4 h-4 text-[#5D5FEF] flex-shrink-0" />
                   </button>
                 )}
               </div>

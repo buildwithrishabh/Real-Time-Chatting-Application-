@@ -68,32 +68,36 @@ export function ConversationItem({ conversation, isActive, onClick }: Conversati
     <div
       onClick={onClick}
       className={cn(
-        'flex items-center gap-3 p-3.5 rounded-2xl cursor-pointer transition-all duration-200 border select-none',
+        'group relative flex items-center gap-3.5 p-3.5 rounded-2xl cursor-pointer transition-all duration-250 select-none border',
         isActive
-          ? 'active-accent-card shadow-md'
-          : 'border-transparent hover:bg-slate-100/80 dark:hover:bg-slate-800/60'
+          ? 'bg-[#18181C] border-[#5D5FEF]/40 shadow-xl shadow-[#5D5FEF]/10 translate-x-0.5'
+          : 'bg-[#111114]/80 border-white/5 hover:bg-[#18181C]/90 hover:border-white/10 hover:-translate-y-0.5'
       )}
     >
+      {isActive && (
+        <span className="absolute left-0 top-3 bottom-3 w-1 bg-gradient-to-b from-[#5D5FEF] to-[#3B82F6] rounded-r-full shadow-md shadow-[#5D5FEF]/50" />
+      )}
+
       <div className="relative flex-shrink-0">
         {avatarUrl && !imgError ? (
           <img
             src={avatarUrl}
             alt={title}
             onError={() => setImgError(true)}
-            className="w-12 h-12 rounded-full object-cover border-2 border-slate-200 dark:border-slate-700"
+            className="w-12 h-12 rounded-full object-cover border-2 border-white/10 shadow-md group-hover:scale-105 transition-transform"
           />
         ) : (
-          <div className="w-12 h-12 rounded-full gradient-btn text-white font-bold flex items-center justify-center text-base shadow-md">
+          <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#5D5FEF] to-[#3B82F6] text-white font-extrabold flex items-center justify-center text-sm shadow-md group-hover:scale-105 transition-transform">
             {title.slice(0, 2).toUpperCase()}
           </div>
         )}
         {conversation.type !== 'group' && (
           <span
             className={cn(
-              'absolute bottom-0 right-0 w-3.5 h-3.5 border-2 border-white dark:border-slate-900 rounded-full transition-colors duration-300',
+              'absolute bottom-0 right-0 w-3.5 h-3.5 border-2 border-[#09090B] rounded-full transition-colors duration-300',
               isOnline
-                ? 'bg-emerald-500'
-                : 'bg-slate-400 dark:bg-slate-600'
+                ? 'bg-emerald-500 shadow-sm shadow-emerald-500/60'
+                : 'bg-zinc-600'
             )}
           />
         )}
@@ -101,21 +105,21 @@ export function ConversationItem({ conversation, isActive, onClick }: Conversati
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-1 mb-1">
-          <h4 className="text-sm font-bold text-slate-900 dark:text-white truncate">
+          <h4 className={cn('text-sm font-bold truncate transition-colors', isActive ? 'text-white' : 'text-zinc-200 group-hover:text-white')}>
             {title}
           </h4>
           {timeDisplay && (
-            <span className="text-xs font-medium text-slate-400 dark:text-slate-500 flex-shrink-0">
+            <span className="text-[11px] font-medium text-zinc-500 flex-shrink-0">
               {timeDisplay}
             </span>
           )}
         </div>
         <div className="flex items-center justify-between gap-2">
-          <p className="text-xs text-slate-500 dark:text-slate-400 truncate leading-relaxed">
+          <p className={cn('text-xs truncate leading-relaxed font-normal', unreadCount > 0 ? 'text-zinc-200 font-semibold' : 'text-zinc-400')}>
             {lastMessageText}
           </p>
           {unreadCount > 0 && (
-            <span className="flex-shrink-0 min-w-[20px] h-[20px] px-1.5 rounded-full gradient-btn text-white text-[11px] font-bold flex items-center justify-center shadow-md">
+            <span className="flex-shrink-0 min-w-[20px] h-[20px] px-1.5 rounded-full bg-gradient-to-tr from-[#5D5FEF] to-[#3B82F6] text-white text-[10px] font-extrabold flex items-center justify-center shadow-md shadow-[#5D5FEF]/30 animate-pulse">
               {unreadCount > 99 ? '99+' : unreadCount}
             </span>
           )}

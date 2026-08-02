@@ -115,36 +115,36 @@ export function MessageInput({
   return (
     <form
       onSubmit={handleSubmit}
-      className="p-2.5 sm:p-4 bg-white dark:bg-[#0B0F19] border-t border-slate-200/80 dark:border-slate-800/80"
+      className="p-3 sm:p-4 bg-[#09090B]/90 backdrop-blur-xl border-t border-white/10"
     >
       {selectedFile && (
-        <div className="mb-2 flex items-center gap-3 p-2.5 px-4 bg-violet-50 dark:bg-violet-950/60 border border-violet-200 dark:border-violet-800 rounded-xl">
+        <div className="mb-2 flex items-center gap-3 p-2.5 px-4 bg-[#18181C] border border-white/10 rounded-2xl">
           {filePreview ? (
             <img
               src={filePreview}
               alt="Preview"
-              className="w-10 h-10 rounded-lg object-cover border border-violet-300 dark:border-violet-700"
+              className="w-10 h-10 rounded-lg object-cover border border-white/10"
             />
           ) : (
-            <div className="w-10 h-10 rounded-lg bg-violet-100 dark:bg-violet-900 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-[#111114] flex items-center justify-center">
               {getFileIcon()}
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-bold text-violet-700 dark:text-violet-300 truncate">
+            <p className="text-xs font-bold text-white truncate">
               {selectedFile.name}
             </p>
-            <p className="text-[10px] text-violet-500 dark:text-violet-400">
+            <p className="text-[10px] text-zinc-400">
               {isUploading ? `Uploading... ${progress}%` : 'Ready to send'}
             </p>
           </div>
           {isUploading ? (
-            <div className="w-5 h-5 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-5 h-5 border-2 border-[#5D5FEF] border-t-transparent rounded-full animate-spin" />
           ) : (
             <button
               type="button"
               onClick={handleRemoveFile}
-              className="p-1 text-violet-400 hover:text-violet-600 dark:hover:text-violet-200 rounded-full hover:bg-violet-200/50 dark:hover:bg-violet-800/50 transition-colors"
+              className="p-1 text-zinc-400 hover:text-white rounded-full hover:bg-white/10 transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -158,10 +158,10 @@ export function MessageInput({
             type="button"
             onClick={() => setShowEmoji((prev) => !prev)}
             className={cn(
-              'p-2 sm:p-2.5 rounded-full transition-colors',
+              'p-2 sm:p-2.5 rounded-2xl transition-colors',
               showEmoji
-                ? 'text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-900/50'
-                : 'text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                ? 'text-[#5D5FEF] bg-[#18181C]'
+                : 'text-zinc-400 hover:text-white hover:bg-white/5'
             )}
           >
             <Smile className="w-5 h-5" />
@@ -170,14 +170,14 @@ export function MessageInput({
           {showEmoji && (
             <div
               ref={emojiRef}
-              className="absolute bottom-full mb-2 left-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl p-3 grid grid-cols-6 gap-1 z-50 animate-scale-in min-w-[260px]"
+              className="absolute bottom-full mb-2 left-0 bg-[#111114] border border-white/10 rounded-2xl shadow-2xl p-3 grid grid-cols-6 gap-1 z-50 animate-scale-in min-w-[260px]"
             >
               {EMOJI_LIST.map((emoji) => (
                 <button
                   key={emoji}
                   type="button"
                   onClick={() => handleEmojiSelect(emoji)}
-                  className="text-lg hover:scale-125 transition-transform p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
+                  className="text-lg hover:scale-125 transition-transform p-1.5 rounded-lg hover:bg-white/10"
                 >
                   {emoji}
                 </button>
@@ -193,7 +193,7 @@ export function MessageInput({
           onKeyDown={handleTextKeyDown}
           placeholder="Type a message..."
           rows={1}
-          className="flex-1 min-w-0 max-h-36 resize-none bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60 focus:border-violet-500/50 rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 transition-all duration-200 font-medium leading-relaxed"
+          className="flex-1 min-w-0 max-h-36 resize-none bg-[#111114] border border-white/10 focus:border-[#5D5FEF]/60 rounded-2xl px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#5D5FEF]/20 transition-all duration-200 font-medium leading-relaxed"
         />
 
         <input
@@ -207,7 +207,7 @@ export function MessageInput({
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          className="p-2 sm:p-2.5 text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex-shrink-0"
+          className="p-2 sm:p-2.5 text-zinc-400 hover:text-white rounded-2xl hover:bg-white/5 transition-colors flex-shrink-0"
         >
           <Paperclip className="w-5 h-5" />
         </button>
@@ -215,7 +215,7 @@ export function MessageInput({
         <button
           type="button"
           onClick={() => toast.info('Voice messages coming soon!')}
-          className="hidden sm:inline-flex p-2 sm:p-2.5 text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex-shrink-0"
+          className="hidden sm:inline-flex p-2 sm:p-2.5 text-zinc-400 hover:text-white rounded-2xl hover:bg-white/5 transition-colors flex-shrink-0"
         >
           <Mic className="w-5 h-5" />
         </button>
@@ -223,7 +223,7 @@ export function MessageInput({
         <button
           type="submit"
           disabled={(!text.trim() && !selectedFile) || isUploading}
-          className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl gradient-btn text-white flex items-center justify-center shadow-lg shadow-violet-600/30 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 transition-all duration-200 flex-shrink-0"
+          className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-tr from-[#5D5FEF] to-[#3B82F6] text-white flex items-center justify-center shadow-lg shadow-[#5D5FEF]/25 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 transition-all duration-200 flex-shrink-0"
         >
           <Send className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.2] translate-x-[1px]" />
         </button>

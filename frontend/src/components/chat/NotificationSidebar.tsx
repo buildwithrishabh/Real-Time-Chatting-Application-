@@ -152,30 +152,30 @@ export function NotificationSidebar() {
       {/* Backdrop */}
       <div
         onClick={() => setNotificationOpen(false)}
-        className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity animate-fade-in"
+        className="fixed inset-0 bg-black/70 backdrop-blur-xs transition-opacity animate-fade-in"
       />
 
       {/* Slide-over Notification Sidebar */}
-      <div className="relative w-full sm:w-96 max-w-full md:ml-20 bg-white dark:bg-slate-900 h-full flex flex-col z-50 shadow-2xl animate-scale-in border-r border-slate-200 dark:border-slate-800 select-none">
+      <div className="relative w-full sm:w-96 max-w-full md:ml-20 bg-[#09090B] h-full flex flex-col z-50 shadow-2xl animate-scale-in border-r border-white/10 select-none">
         
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between flex-shrink-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md">
+        <div className="p-4 sm:p-5 border-b border-white/10 flex items-center justify-between flex-shrink-0 bg-[#09090B]/90 backdrop-blur-xl">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-2xl bg-violet-100 dark:bg-violet-950/60 flex items-center justify-center text-violet-600 dark:text-violet-400">
+            <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-[#5D5FEF] to-[#3B82F6] flex items-center justify-center text-white shadow-md shadow-[#5D5FEF]/20">
               <Bell className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+                <h3 className="text-base font-extrabold text-white">
                   Notifications
                 </h3>
                 {unreadCount > 0 && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold gradient-btn text-white shadow-xs">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gradient-to-tr from-[#5D5FEF] to-[#3B82F6] text-white shadow-xs">
                     {unreadCount}
                   </span>
                 )}
               </div>
-              <p className="text-[11px] text-slate-400 font-medium">Activity & Alerts</p>
+              <p className="text-[11px] text-zinc-400 font-medium">Activity & Alerts</p>
             </div>
           </div>
 
@@ -183,7 +183,7 @@ export function NotificationSidebar() {
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllAsRead}
-                className="p-1.5 text-xs font-bold text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/40 rounded-xl transition-colors"
+                className="p-1.5 text-xs font-bold text-[#5D5FEF] hover:bg-white/5 rounded-xl transition-colors cursor-pointer"
                 title="Mark all as read"
               >
                 <CheckCheck className="w-4.5 h-4.5" />
@@ -192,7 +192,7 @@ export function NotificationSidebar() {
 
             <button
               onClick={() => setNotificationOpen(false)}
-              className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="p-1.5 text-zinc-400 hover:text-white rounded-xl hover:bg-white/5 cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -200,16 +200,16 @@ export function NotificationSidebar() {
         </div>
 
         {/* Filter Tabs Bar */}
-        <div className="px-4 py-2.5 bg-slate-50/80 dark:bg-slate-900/80 border-b border-slate-200/60 dark:border-slate-800/60 flex items-center gap-1.5 flex-shrink-0 overflow-x-auto">
+        <div className="px-4 py-2.5 bg-[#09090B] border-b border-white/10 flex items-center gap-1.5 flex-shrink-0 overflow-x-auto">
           {(['all', 'unread', 'mentions', 'system'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setFilterTab(tab)}
               className={cn(
-                'px-3 py-1 rounded-xl text-xs font-bold transition-all capitalize whitespace-nowrap',
+                'px-3 py-1 rounded-xl text-xs font-bold transition-all capitalize whitespace-nowrap cursor-pointer',
                 filterTab === tab
-                  ? 'bg-violet-100 dark:bg-violet-900/50 text-violet-700 dark:text-violet-300 shadow-xs'
-                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                  ? 'bg-[#18181C] text-white border border-white/10 shadow-xs'
+                  : 'text-zinc-400 hover:text-white'
               )}
             >
               {tab}
@@ -221,18 +221,18 @@ export function NotificationSidebar() {
         <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2.5">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-20">
-              <Loader2 className="w-7 h-7 text-violet-500 animate-spin mb-2" />
-              <p className="text-xs text-slate-400 font-medium">Loading notifications...</p>
+              <Loader2 className="w-7 h-7 text-[#5D5FEF] animate-spin mb-2" />
+              <p className="text-xs text-zinc-400 font-medium">Loading notifications...</p>
             </div>
           ) : filteredNotifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800/60 flex items-center justify-center mb-3">
-                <BellOff className="w-7 h-7 text-slate-400" />
+              <div className="w-14 h-14 rounded-2xl bg-[#111114] border border-white/10 flex items-center justify-center mb-3">
+                <BellOff className="w-7 h-7 text-zinc-500" />
               </div>
-              <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300">
+              <h4 className="text-sm font-bold text-white">
                 No notifications
               </h4>
-              <p className="text-xs text-slate-400 mt-1 max-w-[220px]">
+              <p className="text-xs text-zinc-400 mt-1 max-w-[220px]">
                 When you receive new messages or mentions, they will appear in this sidebar.
               </p>
             </div>
@@ -244,8 +244,8 @@ export function NotificationSidebar() {
                 className={cn(
                   'group flex items-start gap-3 p-3.5 rounded-2xl border transition-all duration-200 cursor-pointer relative',
                   notif.isRead
-                    ? 'bg-white dark:bg-slate-800/40 border-slate-200/60 dark:border-slate-800/60 hover:bg-slate-50 dark:hover:bg-slate-800/80'
-                    : 'bg-violet-50/70 dark:bg-violet-950/40 border-violet-200 dark:border-violet-900/60 shadow-xs'
+                    ? 'bg-[#111114] border-white/5 hover:bg-[#18181C]'
+                    : 'bg-[#18181C] border-[#5D5FEF]/40 shadow-md shadow-[#5D5FEF]/5'
                 )}
               >
                 {/* Sender Avatar or Icon Badge */}
@@ -254,15 +254,15 @@ export function NotificationSidebar() {
                     <img
                       src={notif.sender.avatarUrl}
                       alt={notif.sender.displayName || notif.sender.username}
-                      className="w-10 h-10 rounded-full object-cover border-2 border-violet-500/30 shadow-xs"
+                      className="w-10 h-10 rounded-full object-cover border border-white/10 shadow-xs"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center shadow-xs">
+                    <div className="w-10 h-10 rounded-full bg-[#18181C] border border-white/10 flex items-center justify-center shadow-xs">
                       {getNotificationIcon(notif.type)}
                     </div>
                   )}
 
-                  <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center justify-center shadow-xs">
+                  <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-[#09090B] border border-white/10 flex items-center justify-center shadow-xs">
                     {getNotificationIcon(notif.type)}
                   </div>
                 </div>
@@ -270,14 +270,14 @@ export function NotificationSidebar() {
                 {/* Details */}
                 <div className="flex-1 min-w-0 pr-6">
                   <div className="flex items-center justify-between gap-1 mb-0.5">
-                    <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                    <h4 className="text-xs font-bold text-white truncate">
                       {notif.title}
                     </h4>
-                    <span className="text-[10px] font-medium text-slate-400 flex-shrink-0">
+                    <span className="text-[10px] font-medium text-zinc-500 flex-shrink-0">
                       {formatConversationDate(notif.createdAt)}
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-2">
+                  <p className="text-[11px] text-zinc-400 leading-relaxed line-clamp-2">
                     {notif.body}
                   </p>
                 </div>
@@ -285,12 +285,12 @@ export function NotificationSidebar() {
                 {/* Actions & Unread Indicator */}
                 <div className="absolute right-3 top-3 flex items-center gap-1.5">
                   {!notif.isRead && (
-                    <span className="w-2 h-2 rounded-full bg-violet-600 animate-pulse" />
+                    <span className="w-2 h-2 rounded-full bg-[#5D5FEF] animate-pulse" />
                   )}
 
                   <button
                     onClick={(e) => handleDelete(e, notif._id)}
-                    className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-700 transition-all"
+                    className="opacity-0 group-hover:opacity-100 p-1 text-zinc-400 hover:text-rose-400 rounded-lg hover:bg-white/10 transition-all cursor-pointer"
                     title="Delete"
                   >
                     <Trash2 className="w-3.5 h-3.5" />

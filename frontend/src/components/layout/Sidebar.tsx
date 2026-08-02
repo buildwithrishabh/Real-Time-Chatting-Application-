@@ -75,10 +75,10 @@ export function Sidebar() {
   return (
     <>
       {/* 1. DESKTOP / LAPTOP HOVER-EXPAND SIDEBAR */}
-      <aside className="hidden md:flex group relative hover:w-64 w-20 border-r border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-[#111827] flex-col justify-between h-screen p-3 hover:p-4 transition-all duration-300 ease-in-out select-none flex-shrink-0 z-30 shadow-sm hover:shadow-xl">
-        <div className="flex flex-col gap-5 overflow-hidden">
+      <aside className="hidden md:flex group relative hover:w-64 w-20 border-r border-[#1E1E24] bg-[#09090B] flex-col justify-between h-screen p-3.5 hover:p-4 transition-all duration-300 ease-in-out select-none flex-shrink-0 z-30 shadow-2xl">
+        <div className="flex flex-col gap-6 overflow-hidden">
           {/* Brand Header */}
-          <div className="flex items-center gap-3 px-1 py-1">
+          <div className="flex items-center gap-3 px-1.5 py-1">
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-violet-600 via-indigo-600 to-cyan-500 flex items-center justify-center text-white shadow-lg shadow-violet-600/30 flex-shrink-0">
               <MessageSquare className="w-5 h-5 fill-current" />
             </div>
@@ -89,32 +89,32 @@ export function Sidebar() {
 
           {/* User Profile Card */}
           <div className="relative">
-            <div className="w-full flex items-center justify-between p-2 rounded-2xl border border-transparent">
+            <div className="w-full flex items-center justify-between p-2 rounded-2xl border border-transparent hover:border-white/5 transition-all">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="relative flex-shrink-0">
                   {user?.avatarUrl ? (
                     <img
                       src={user.avatarUrl}
                       alt={user.displayName || user.username}
-                      className="w-10 h-10 rounded-full object-cover border-2 border-violet-500/30"
+                      className="w-10 h-10 rounded-full object-cover border border-white/10"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-violet-600 to-indigo-600 text-white font-bold flex items-center justify-center text-sm shadow-md">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#5D5FEF] to-[#3B82F6] text-white font-bold flex items-center justify-center text-sm shadow-md">
                       {(user?.displayName || user?.username || 'ME').slice(0, 2).toUpperCase()}
                     </div>
                   )}
                   <span
                     className={cn(
-                      'absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-[#111827] transition-colors duration-300',
-                      isConnected ? 'bg-emerald-500' : 'bg-slate-400'
+                      'absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[#09090B] transition-colors duration-300',
+                      isConnected ? 'bg-emerald-500 shadow-sm shadow-emerald-500/50' : 'bg-zinc-600'
                     )}
                   />
                 </div>
                 <div className="flex flex-col text-left min-w-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
-                  <span className="text-sm font-bold text-slate-900 dark:text-white truncate">
+                  <span className="text-sm font-bold text-white truncate">
                     {user?.displayName || user?.username || 'User'}
                   </span>
-                  <span className="text-xs text-slate-400 dark:text-slate-500 font-semibold truncate">
+                  <span className="text-xs text-zinc-400 font-semibold truncate">
                     @{user?.username || 'username'}
                   </span>
                 </div>
@@ -133,16 +133,16 @@ export function Sidebar() {
                   key={item.id}
                   onClick={() => handleNavClick(item.id)}
                   className={cn(
-                    'flex items-center gap-3.5 px-3 py-3 rounded-2xl font-semibold text-sm transition-all duration-200 relative',
+                    'flex items-center gap-3.5 px-3.5 py-3 rounded-2xl font-semibold text-sm transition-all duration-200 relative',
                     isActive
-                      ? 'bg-violet-50 dark:bg-violet-950/70 text-violet-600 dark:text-violet-400 shadow-xs border-l-4 border-violet-600'
-                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white'
+                      ? 'bg-[#18181C] text-white shadow-xs border-l-2 border-[#5D5FEF]'
+                      : 'text-zinc-400 hover:bg-[#111114] hover:text-white'
                   )}
                 >
                   <div className="relative flex-shrink-0">
-                    <Icon className={cn('w-5 h-5', isActive ? 'text-violet-600 dark:text-violet-400' : 'text-slate-400')} />
+                    <Icon className={cn('w-5 h-5 transition-colors', isActive ? 'text-[#5D5FEF]' : 'text-zinc-400')} />
                     {isNotif && unreadNotifCount > 0 && (
-                      <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-rose-500 border-2 border-white dark:border-[#111827] animate-pulse" />
+                      <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-rose-500 border-2 border-[#09090B] animate-pulse" />
                     )}
                   </div>
                   <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap flex-1 text-left">

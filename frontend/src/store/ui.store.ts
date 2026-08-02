@@ -16,20 +16,20 @@ interface ThemeColors {
 
 const ACCENT_PALETTE: Record<AccentColor, ThemeColors> = {
   violet: {
-    name: 'Electric Violet',
-    primary: '#7C3AED',
-    primaryHover: '#6D28D9',
-    primaryLight: '#A78BFA',
-    primaryGlow: 'rgba(124, 58, 237, 0.4)',
-    gradientFrom: '#7C3AED',
-    gradientTo: '#4F46E5',
+    name: 'Electric Indigo',
+    primary: '#5D5FEF',
+    primaryHover: '#4F46E5',
+    primaryLight: '#818CF8',
+    primaryGlow: 'rgba(93, 95, 239, 0.25)',
+    gradientFrom: '#5D5FEF',
+    gradientTo: '#3B82F6',
   },
   cyan: {
     name: 'Radiant Cyan',
     primary: '#06B6D4',
     primaryHover: '#0891B2',
     primaryLight: '#67E8F9',
-    primaryGlow: 'rgba(6, 182, 212, 0.4)',
+    primaryGlow: 'rgba(6, 182, 212, 0.25)',
     gradientFrom: '#06B6D4',
     gradientTo: '#2563EB',
   },
@@ -38,7 +38,7 @@ const ACCENT_PALETTE: Record<AccentColor, ThemeColors> = {
     primary: '#10B981',
     primaryHover: '#059669',
     primaryLight: '#6EE7B7',
-    primaryGlow: 'rgba(16, 185, 129, 0.4)',
+    primaryGlow: 'rgba(16, 185, 129, 0.25)',
     gradientFrom: '#10B981',
     gradientTo: '#059669',
   },
@@ -47,7 +47,7 @@ const ACCENT_PALETTE: Record<AccentColor, ThemeColors> = {
     primary: '#F43F5E',
     primaryHover: '#E11D48',
     primaryLight: '#FDA4AF',
-    primaryGlow: 'rgba(244, 63, 94, 0.4)',
+    primaryGlow: 'rgba(244, 63, 94, 0.25)',
     gradientFrom: '#F43F5E',
     gradientTo: '#E11D48',
   },
@@ -56,7 +56,7 @@ const ACCENT_PALETTE: Record<AccentColor, ThemeColors> = {
     primary: '#EC4899',
     primaryHover: '#DB2777',
     primaryLight: '#F472B6',
-    primaryGlow: 'rgba(236, 72, 153, 0.4)',
+    primaryGlow: 'rgba(236, 72, 153, 0.25)',
     gradientFrom: '#EC4899',
     gradientTo: '#8B5CF6',
   },
@@ -65,7 +65,7 @@ const ACCENT_PALETTE: Record<AccentColor, ThemeColors> = {
     primary: '#F59E0B',
     primaryHover: '#D97706',
     primaryLight: '#FCD34D',
-    primaryGlow: 'rgba(245, 158, 11, 0.4)',
+    primaryGlow: 'rgba(245, 158, 11, 0.25)',
     gradientFrom: '#F59E0B',
     gradientTo: '#EA580C',
   },
@@ -106,7 +106,7 @@ const initialDarkMode =
   localStorage.getItem('theme') === 'dark' ||
   (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
-const savedAccent = (localStorage.getItem('accent') as AccentColor) || 'cyan';
+const savedAccent = (localStorage.getItem('accent') as AccentColor) || 'violet';
 
 if (initialDarkMode) {
   document.documentElement.classList.add('dark');

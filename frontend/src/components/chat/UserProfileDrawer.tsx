@@ -168,16 +168,16 @@ export function UserProfileDrawer({ activeConversation, messages }: UserProfileD
       {/* Drawer Container */}
       <div
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full sm:w-96 bg-white dark:bg-[#0F172A] h-full flex flex-col z-50 shadow-2xl animate-scale-in border-l border-slate-200 dark:border-slate-800 select-none overflow-hidden"
+        className="relative w-full sm:w-96 bg-[#09090B] h-full flex flex-col z-50 shadow-2xl animate-scale-in border-l border-white/10 select-none overflow-hidden"
       >
         {/* Header Bar */}
-        <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between flex-shrink-0 bg-white/90 dark:bg-[#0F172A]/90 backdrop-blur-md">
-          <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+        <div className="p-4 sm:p-5 border-b border-white/10 flex items-center justify-between flex-shrink-0 bg-[#09090B]/90 backdrop-blur-xl">
+          <h3 className="text-base font-extrabold text-white">
             {isGroup ? 'Group Information' : 'Contact Profile'}
           </h3>
           <button
             onClick={() => setUserProfileDrawerOpen(false)}
-            className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800"
+            className="p-1.5 text-zinc-400 hover:text-white rounded-xl hover:bg-white/5"
             aria-label="Close profile drawer"
           >
             <X className="w-5 h-5" />
@@ -188,37 +188,37 @@ export function UserProfileDrawer({ activeConversation, messages }: UserProfileD
         <div className="flex-1 overflow-y-auto p-5 space-y-6">
           
           {/* User Profile Header Summary Card */}
-          <div className="flex flex-col items-center text-center pb-5 border-b border-slate-100 dark:border-slate-800/80">
+          <div className="flex flex-col items-center text-center pb-5 border-b border-white/10">
             <div className="relative mb-3">
               {avatarUrl ? (
                 <img
                   src={avatarUrl}
                   alt={title}
                   onClick={() => setLightboxUrl(avatarUrl)}
-                  className="w-24 h-24 rounded-full object-cover border-4 border-violet-500/30 shadow-lg cursor-pointer hover:opacity-95 transition-opacity"
+                  className="w-24 h-24 rounded-full object-cover border-2 border-white/10 shadow-xl cursor-pointer hover:opacity-95 transition-opacity"
                 />
               ) : (
-                <div className="w-24 h-24 rounded-full gradient-btn text-white font-extrabold flex items-center justify-center text-3xl shadow-lg">
+                <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-[#5D5FEF] to-[#3B82F6] text-white font-extrabold flex items-center justify-center text-3xl shadow-lg">
                   {title.slice(0, 2).toUpperCase()}
                 </div>
               )}
               {!isGroup && (
                 <span
                   className={cn(
-                    'absolute bottom-1 right-1 w-4 h-4 border-2 border-white dark:border-[#0F172A] rounded-full transition-colors duration-300',
-                    isOnline ? 'bg-emerald-500' : 'bg-slate-400'
+                    'absolute bottom-1 right-1 w-4 h-4 border-2 border-[#09090B] rounded-full transition-colors duration-300',
+                    isOnline ? 'bg-emerald-500 shadow-sm shadow-emerald-500/50' : 'bg-zinc-600'
                   )}
                 />
               )}
             </div>
 
-            <h4 className="text-lg font-extrabold text-slate-900 dark:text-white truncate max-w-full">
+            <h4 className="text-lg font-extrabold text-white truncate max-w-full">
               {title}
             </h4>
             {!isGroup && otherUserObj?.username && (
-              <p className="text-xs text-slate-400 font-semibold mt-0.5">@{otherUserObj.username}</p>
+              <p className="text-xs text-zinc-400 font-semibold mt-0.5">@{otherUserObj.username}</p>
             )}
-            <p className="text-xs font-bold text-violet-500 mt-1">
+            <p className="text-xs font-bold text-[#5D5FEF] mt-1">
               {isGroup
                 ? `${activeConversation.participants?.length || 0} Members`
                 : isOnline

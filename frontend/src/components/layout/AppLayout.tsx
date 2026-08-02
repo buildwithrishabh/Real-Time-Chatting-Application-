@@ -98,7 +98,7 @@ export function AppLayout() {
   }, [isConnected, syncPresence, participantUserIds]);
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-slate-100 dark:bg-[#070B12] relative">
+    <div className="flex h-screen w-screen overflow-hidden bg-[#050505] relative">
       {isNetworkOffline && (
         <div className="fixed top-0 left-0 right-0 z-50 bg-rose-600 text-white text-xs font-bold py-1.5 px-4 text-center flex items-center justify-center gap-2 shadow-md">
           <WifiOff className="w-4 h-4" />

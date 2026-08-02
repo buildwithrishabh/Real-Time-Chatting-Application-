@@ -150,15 +150,19 @@ export function ChatWindow({ activeConversation }: ChatWindowProps) {
 
   if (!activeConversation || !conversationId) {
     return (
-      <div className="flex-1 flex items-center justify-center h-screen bg-slate-50/50 dark:bg-[#0B0F19]">
-        <div className="text-center">
-          <div className="w-20 h-20 mx-auto mb-4 rounded-3xl bg-gradient-to-tr from-violet-600/20 via-indigo-600/20 to-cyan-500/20 flex items-center justify-center">
-            <Info className="w-10 h-10 text-violet-600/40" />
+      <div className="flex-1 flex items-center justify-center h-screen bg-[#050505] chat-workspace-bg relative overflow-hidden">
+        {/* Ambient Radial Background Glows matching Landing Page */}
+        <div className="absolute w-[450px] h-[450px] bg-violet-600/12 rounded-full blur-3xl top-1/4 left-1/3 pointer-events-none animate-pulse-slow" />
+        <div className="absolute w-[400px] h-[400px] bg-cyan-500/10 rounded-full blur-3xl bottom-10 right-20 pointer-events-none animate-pulse-slow" />
+        
+        <div className="text-center z-10">
+          <div className="w-20 h-20 mx-auto mb-4 rounded-3xl bg-[#111114] border border-white/10 flex items-center justify-center shadow-2xl">
+            <Info className="w-10 h-10 text-[#5D5FEF]" />
           </div>
-          <h3 className="text-lg font-bold text-slate-400 dark:text-slate-500">
+          <h3 className="text-lg font-bold text-white">
             Select a conversation
           </h3>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-zinc-400 mt-1">
             Choose from your existing chats or start a new one
           </p>
         </div>
@@ -167,14 +171,18 @@ export function ChatWindow({ activeConversation }: ChatWindowProps) {
   }
 
   return (
-    <div className="flex-1 flex flex-col h-screen bg-slate-50/50 dark:bg-[#0B0F19] transition-colors relative">
+    <div className="flex-1 flex flex-col h-screen bg-[#050505] chat-workspace-bg transition-colors relative overflow-hidden">
+      {/* Ambient Radial Background Glows matching Landing Page */}
+      <div className="absolute w-[450px] h-[450px] bg-violet-600/12 rounded-full blur-3xl top-10 left-1/3 pointer-events-none animate-pulse-slow" />
+      <div className="absolute w-[400px] h-[400px] bg-cyan-500/10 rounded-full blur-3xl bottom-10 right-20 pointer-events-none animate-pulse-slow" />
+
       {/* Header */}
-      <div className="h-16 px-3 sm:px-6 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/90 dark:bg-[#0B0F19]/90 backdrop-blur-md flex items-center justify-between shadow-2xs select-none flex-shrink-0">
+      <div className="h-16 px-4 sm:px-6 border-b border-white/10 bg-[#09090B]/90 backdrop-blur-xl flex items-center justify-between shadow-2xs select-none flex-shrink-0 z-10">
         
         {/* Clickable Contact Profile Header */}
         <div
           onClick={() => setUserProfileDrawerOpen(true)}
-          className="flex items-center gap-2 sm:gap-3 min-w-0 cursor-pointer hover:opacity-90 transition-opacity"
+          className="flex items-center gap-3 min-w-0 cursor-pointer hover:opacity-95 transition-opacity"
           title="Click to view Contact Profile & Shared Media"
         >
           <button
@@ -182,7 +190,7 @@ export function ChatWindow({ activeConversation }: ChatWindowProps) {
               e.stopPropagation();
               setActiveConversation(null);
             }}
-            className="md:hidden p-2 -ml-1 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95 transition-all"
+            className="md:hidden p-2 -ml-1 text-zinc-400 hover:text-white rounded-xl hover:bg-white/5 active:scale-95 transition-all"
             aria-label="Back to conversations list"
           >
             <ArrowLeft className="w-5 h-5 stroke-[2.5]" />
@@ -193,70 +201,75 @@ export function ChatWindow({ activeConversation }: ChatWindowProps) {
               <img
                 src={headerAvatar}
                 alt={headerTitle}
-                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-violet-500/30"
+                className="w-10 h-10 sm:w-11 sm:h-11 rounded-full object-cover border-2 border-white/10 shadow-md"
               />
             ) : (
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-tr from-violet-600 to-indigo-600 text-white font-bold flex items-center justify-center text-xs sm:text-sm shadow-md">
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-gradient-to-tr from-[#5D5FEF] to-[#3B82F6] text-white font-extrabold flex items-center justify-center text-xs sm:text-sm shadow-md">
                 {headerTitle.slice(0, 2).toUpperCase()}
               </div>
             )}
             {activeConversation.type !== 'group' && (
               <span
                 className={cn(
-                  'absolute bottom-0 right-0 w-2.5 h-2.5 sm:w-3 sm:h-3 border-2 border-white dark:border-slate-900 rounded-full transition-colors duration-300',
-                  isOnline ? 'bg-emerald-500' : 'bg-slate-400 dark:bg-slate-600'
+                  'absolute bottom-0 right-0 w-3 h-3 border-2 border-[#09090B] rounded-full transition-colors duration-300',
+                  isOnline ? 'bg-emerald-500 shadow-sm shadow-emerald-500/60' : 'bg-zinc-600'
                 )}
               />
             )}
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white leading-tight truncate">
+            <h3 className="text-sm sm:text-base font-extrabold text-white leading-tight truncate">
               {headerTitle}
             </h3>
-            <span className="text-[11px] sm:text-xs font-semibold text-slate-400 dark:text-slate-500 block truncate">
-              {activeConversation.type === 'group'
-                ? `${activeConversation.participants?.length || 0} members`
-                : isOnline
-                  ? 'Online'
-                  : otherUserLastSeenAt
-                    ? `Last seen ${formatConversationDate(otherUserLastSeenAt)}`
-                    : 'Offline'}
+            <span className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-zinc-400 truncate mt-0.5">
+              {activeConversation.type === 'group' ? (
+                `${activeConversation.participants?.length || 0} members`
+              ) : isOnline ? (
+                <>
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-emerald-400 font-bold">Active now</span>
+                </>
+              ) : otherUserLastSeenAt ? (
+                `Last seen ${formatConversationDate(otherUserLastSeenAt)}`
+              ) : (
+                'Offline'
+              )}
             </span>
           </div>
         </div>
 
         {/* Header Actions */}
-        <div className="flex items-center gap-0.5 sm:gap-1 text-slate-500 dark:text-slate-400 flex-shrink-0">
+        <div className="flex items-center gap-1 text-zinc-400 flex-shrink-0">
           <button
             onClick={() => setSearchActive((prev) => !prev)}
             className={cn(
-              'p-2 sm:p-2.5 rounded-2xl transition-colors',
-              searchActive ? 'text-violet-600 bg-violet-50 dark:bg-violet-950/60' : 'hover:text-violet-600 dark:hover:text-violet-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              'p-2.5 rounded-xl transition-all cursor-pointer',
+              searchActive ? 'text-[#5D5FEF] bg-[#18181C] border border-white/10' : 'hover:text-white hover:bg-white/5'
             )}
             aria-label="Search conversation messages"
           >
-            <Search className="w-5 h-5" />
+            <Search className="w-4.5 h-4.5" />
           </button>
           <button
             onClick={() => toast.info('Voice calling coming soon!')}
-            className="hidden sm:inline-flex p-2 sm:p-2.5 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-colors"
+            className="hidden sm:inline-flex p-2.5 hover:text-white hover:bg-white/5 rounded-xl transition-all cursor-pointer"
             aria-label="Start voice call"
           >
-            <Phone className="w-5 h-5" />
+            <Phone className="w-4.5 h-4.5" />
           </button>
           <button
             onClick={() => toast.info('Video calling coming soon!')}
-            className="hidden sm:inline-flex p-2 sm:p-2.5 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-colors"
+            className="hidden sm:inline-flex p-2.5 hover:text-white hover:bg-white/5 rounded-xl transition-all cursor-pointer"
             aria-label="Start video call"
           >
-            <Video className="w-5 h-5" />
+            <Video className="w-4.5 h-4.5" />
           </button>
           <button
             onClick={() => setUserProfileDrawerOpen(true)}
-            className="p-2 sm:p-2.5 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-colors"
+            className="p-2.5 hover:text-white hover:bg-white/5 rounded-xl transition-all cursor-pointer"
             aria-label="Contact info & shared media"
           >
-            <MoreVertical className="w-5 h-5" />
+            <MoreVertical className="w-4.5 h-4.5" />
           </button>
         </div>
       </div>
