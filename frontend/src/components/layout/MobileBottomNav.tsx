@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { MessageSquare, Users, UserPlus, Bell, Settings } from 'lucide-react';
+import { MessageSquare, Users, UserPlus, Bell, Settings, Phone } from 'lucide-react';
 import { useUIStore } from '../../store/ui.store';
 import { useChatStore } from '../../store/chat.store';
 import type { NavTab } from '../../store/ui.store';
@@ -45,9 +45,9 @@ export function MobileBottomNav() {
 
   const items = [
     { id: 'chats' as NavTab, label: 'Chats', icon: MessageSquare },
-    { id: 'people' as NavTab, label: 'People', icon: Users },
-    { id: 'groups' as NavTab, label: 'Groups', icon: UserPlus },
+    { id: 'calls' as NavTab, label: 'Calls', icon: Phone },
     { id: 'notifications' as NavTab, label: 'Notifications', icon: Bell },
+    { id: 'people' as NavTab, label: 'People', icon: Users },
     { id: 'settings' as NavTab, label: 'Settings', icon: Settings },
   ];
 

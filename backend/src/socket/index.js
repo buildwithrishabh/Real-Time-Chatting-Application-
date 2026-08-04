@@ -10,6 +10,7 @@ const registerMessageHandlers = require("./handlers/message.handler");
 const registerPresenceHandlers = require("./handlers/presence.handler");
 const registerTypingHandlers = require("./handlers/typing.handler");
 const registerReceiptHandlers = require("./handlers/receipt.handler");
+const registerCallHandlers = require("./handlers/call.handler");
 
 let io;
 
@@ -76,6 +77,7 @@ const initSocket = (server) => {
     registerMessageHandlers(io, socket);
     registerTypingHandlers(io, socket);
     registerReceiptHandlers(io, socket);
+    registerCallHandlers(io, socket);
 
     socket.on("disconnect", () => {
       logger.info(

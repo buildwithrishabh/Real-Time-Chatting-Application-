@@ -7,6 +7,7 @@ import { ChatWindow } from '../chat/ChatWindow';
 import { NewChatModal } from '../chat/NewChatModal';
 import { ProfileSettingsModal } from '../chat/ProfileSettingsModal';
 import { NotificationSidebar } from '../chat/NotificationSidebar';
+import { CallHistorySidebar } from '../chat/CallHistorySidebar';
 import { SettingsPage } from '../../pages/chat/SettingsPage';
 import { useConversations } from '../../hooks/useConversations';
 import { useChatStore } from '../../store/chat.store';
@@ -54,11 +55,9 @@ export function AppLayout() {
       ? Users
       : activeTab === 'groups'
         ? UserPlus
-        : activeTab === 'calls'
-          ? Phone
-          : activeTab === 'saved'
-            ? Bookmark
-            : Settings;
+        : activeTab === 'saved'
+          ? Bookmark
+          : Settings;
 
   useEffect(() => {
     const handleOnline = () => {
@@ -130,13 +129,32 @@ export function AppLayout() {
         </>
       )}
 
+      {!showChatView && activeTab === 'calls' && (
+        <>
+          <div className="flex-shrink-0 flex flex-1 md:flex-none w-full md:w-auto pb-16 md:pb-0">
+            <CallHistorySidebar />
+          </div>
+          <div className="hidden md:flex flex-1 items-center justify-center bg-[#070B12] text-center p-8">
+            <div className="flex flex-col items-center justify-center max-w-sm">
+              <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-[#5D5FEF]/20 to-[#3B82F6]/20 border border-white/10 flex items-center justify-center mb-4">
+                <Phone className="w-8 h-8 text-[#5D5FEF]" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-1">Call Logs & History</h3>
+              <p className="text-xs text-zinc-400">
+                Select a call from your log to redial or view past voice and video conversation details.
+              </p>
+            </div>
+          </div>
+        </>
+      )}
+
       {!showChatView && activeTab === 'settings' && (
         <div className="flex-1 min-w-0 pb-16 md:pb-0">
           <SettingsPage />
         </div>
       )}
 
-      {!showChatView && activeTab !== 'settings' && (
+      {!showChatView && activeTab !== 'settings' && activeTab !== 'calls' && (
         <div className="flex-1 flex items-center justify-center bg-slate-50 dark:bg-[#070B12] pb-16 md:pb-0">
           <div className="text-center px-4">
             <div className="w-20 h-20 mx-auto mb-4 rounded-3xl bg-gradient-to-tr from-violet-600/15 via-cyan-500/15 to-emerald-500/15 flex items-center justify-center border border-slate-200/80 dark:border-slate-800/80">
@@ -150,11 +168,9 @@ export function AppLayout() {
                 ? 'Coming soon: find and connect with people'
                 : activeTab === 'groups'
                   ? 'Coming soon: discover and manage groups'
-                  : activeTab === 'calls'
-                    ? 'Coming soon: voice and video calls'
-                    : activeTab === 'saved'
-                      ? 'Coming soon: your bookmarked messages'
-                      : 'Coming soon: app settings and preferences'}
+                  : activeTab === 'saved'
+                    ? 'Coming soon: your bookmarked messages'
+                    : 'Coming soon: app settings and preferences'}
             </p>
           </div>
         </div>

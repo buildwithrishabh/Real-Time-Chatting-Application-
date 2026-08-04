@@ -18,11 +18,14 @@ import { toast } from 'sonner';
 import { cn } from '../../lib/utils';
 import { getSocket } from '../../socket/client';
 
+import { useWebRTC } from '../../hooks/useWebRTC';
+
 interface ChatWindowProps {
   activeConversation: Conversation | null;
 }
 
 export function ChatWindow({ activeConversation }: ChatWindowProps) {
+  const { initiateCall } = useWebRTC();
   const queryClient = useQueryClient();
   const setActiveConversation = useChatStore((s) => s.setActiveConversation);
   const setUserProfileDrawerOpen = useUIStore((s) => s.setUserProfileDrawerOpen);
@@ -251,16 +254,46 @@ export function ChatWindow({ activeConversation }: ChatWindowProps) {
             <Search className="w-4.5 h-4.5" />
           </button>
           <button
-            onClick={() => toast.info('Voice calling coming soon!')}
-            className="hidden sm:inline-flex p-2.5 hover:text-white hover:bg-white/5 rounded-xl transition-all cursor-pointer"
+            onClick={() => {
+              if (!otherUserId) {
+                toast.error('Cannot call this user');
+                return;
+              }
+              initiateCall(
+                {
+                  id: otherUserId,
+                  username: otherUserObj?.username || headerTitle,
+                  displayName: otherUserObj?.displayName || headerTitle,
+                  avatarUrl: headerAvatar,
+                },
+                'audio'
+              );
+            }}
+            className="hidden sm:inline-flex p-2.5 hover:text-white hover:bg-white/5 rounded-xl transition-all cursor-pointer text-zinc-400 hover:text-emerald-400"
             aria-label="Start voice call"
+            title="Start Audio Call"
           >
             <Phone className="w-4.5 h-4.5" />
           </button>
           <button
-            onClick={() => toast.info('Video calling coming soon!')}
-            className="hidden sm:inline-flex p-2.5 hover:text-white hover:bg-white/5 rounded-xl transition-all cursor-pointer"
+            onClick={() => {
+              if (!otherUserId) {
+                toast.error('Cannot call this user');
+                return;
+              }
+              initiateCall(
+                {
+                  id: otherUserId,
+                  username: otherUserObj?.username || headerTitle,
+                  displayName: otherUserObj?.displayName || headerTitle,
+                  avatarUrl: headerAvatar,
+                },
+                'video'
+              );
+            }}
+            className="hidden sm:inline-flex p-2.5 hover:text-white hover:bg-white/5 rounded-xl transition-all cursor-pointer text-zinc-400 hover:text-cyan-400"
             aria-label="Start video call"
+            title="Start Video Call"
           >
             <Video className="w-4.5 h-4.5" />
           </button>

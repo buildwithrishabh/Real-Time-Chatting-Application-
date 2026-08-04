@@ -30,6 +30,9 @@ const queryClient = new QueryClient({
   },
 });
 
+import { IncomingCallModal } from './components/call/IncomingCallModal';
+import { ActiveCallModal } from './components/call/ActiveCallModal';
+
 export function App() {
   const [isInitializing, setIsInitializing] = useState(true);
   const setAuth = useAuthStore((s) => s.setAuth);
@@ -90,6 +93,8 @@ export function App() {
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </BrowserRouter>
+      <IncomingCallModal />
+      <ActiveCallModal />
       <Toaster position="top-right" richColors />
     </QueryClientProvider>
   );
