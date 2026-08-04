@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { MessageSquare, Users, UserPlus, Bell, Settings, Phone } from 'lucide-react';
+import { MessageSquare, Users, Bell, Settings, Phone } from 'lucide-react';
 import { useUIStore } from '../../store/ui.store';
 import { useChatStore } from '../../store/chat.store';
 import type { NavTab } from '../../store/ui.store';

@@ -32,6 +32,12 @@ const queryClient = new QueryClient({
 
 import { IncomingCallModal } from './components/call/IncomingCallModal';
 import { ActiveCallModal } from './components/call/ActiveCallModal';
+import { useCallSocketListener } from './hooks/useCallSocketListener';
+
+function CallSocketBridge() {
+  useCallSocketListener();
+  return null;
+}
 
 export function App() {
   const [isInitializing, setIsInitializing] = useState(true);
@@ -93,6 +99,7 @@ export function App() {
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </BrowserRouter>
+      <CallSocketBridge />
       <IncomingCallModal />
       <ActiveCallModal />
       <Toaster position="top-right" richColors />

@@ -269,7 +269,7 @@ export function ChatWindow({ activeConversation }: ChatWindowProps) {
                 'audio'
               );
             }}
-            className="hidden sm:inline-flex p-2.5 hover:text-white hover:bg-white/5 rounded-xl transition-all cursor-pointer text-zinc-400 hover:text-emerald-400"
+            className="inline-flex p-2.5 hover:text-white hover:bg-white/5 rounded-xl transition-all cursor-pointer text-zinc-400 hover:text-emerald-400"
             aria-label="Start voice call"
             title="Start Audio Call"
           >
@@ -291,7 +291,7 @@ export function ChatWindow({ activeConversation }: ChatWindowProps) {
                 'video'
               );
             }}
-            className="hidden sm:inline-flex p-2.5 hover:text-white hover:bg-white/5 rounded-xl transition-all cursor-pointer text-zinc-400 hover:text-cyan-400"
+            className="inline-flex p-2.5 hover:text-white hover:bg-white/5 rounded-xl transition-all cursor-pointer text-zinc-400 hover:text-cyan-400"
             aria-label="Start video call"
             title="Start Video Call"
           >

@@ -356,6 +356,11 @@ cd "Real-Time Chat Application"
    VITE_API_URL=http://localhost:5000/api/v1
    VITE_WS_URL=http://localhost:5000
    VITE_CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
+
+   # Optional TURN server for reliable WebRTC calls on restrictive NATs
+   VITE_TURN_URL=turn:your-turn.example.com:3478
+   VITE_TURN_USERNAME=your_turn_username
+   VITE_TURN_PASSWORD=your_turn_password
    ```
 
 3. Start the Frontend Vite Development Server:
@@ -395,6 +400,9 @@ cd "Real-Time Chat Application"
 | `VITE_API_URL` | Base URL for REST API requests | `http://localhost:5000/api/v1` |
 | `VITE_WS_URL` | Base WebSocket server URL | `http://localhost:5000` |
 | `VITE_CLOUDINARY_CLOUD_NAME` | Cloudinary Cloud Name for client widget | *Cloudinary ID* |
+| `VITE_TURN_URL` | TURN server URL for WebRTC calls (e.g. `turn:host:3478`) | *Optional* |
+| `VITE_TURN_USERNAME` | TURN server username | *Optional* |
+| `VITE_TURN_PASSWORD` | TURN server password | *Optional* |
 
 ---
 

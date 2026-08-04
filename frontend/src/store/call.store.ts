@@ -20,6 +20,7 @@ interface CallStoreState {
 
   // Actions
   setCallStatus: (status: CallStatus) => void;
+  setCallId: (callId: string | null) => void;
   startOutgoingCall: (peer: CallPeer, callType: CallType) => void;
   setIncomingCall: (callId: string, caller: CallPeer, callType: CallType, offer: RTCSessionDescriptionInit) => void;
   setCallConnected: (callId: string) => void;
@@ -51,6 +52,8 @@ export const useCallStore = create<CallStoreState>((set) => ({
   errorMessage: null,
 
   setCallStatus: (status) => set({ callStatus: status }),
+
+  setCallId: (callId) => set({ callId }),
 
   startOutgoingCall: (peer, callType) =>
     set({

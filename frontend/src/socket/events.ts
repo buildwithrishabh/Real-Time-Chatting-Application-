@@ -16,6 +16,7 @@ export const SOCKET_EVENTS = {
   FILE_SCAN_STATUS: 'file:scan_status',
   // WebRTC Call Events
   CALL_INITIATE: 'call:initiate',
+  CALL_RINGING: 'call:ringing',
   CALL_INCOMING: 'call:incoming',
   CALL_ACCEPT: 'call:accept',
   CALL_ACCEPTED: 'call:accepted',

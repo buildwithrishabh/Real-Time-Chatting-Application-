@@ -147,6 +147,12 @@ const registerCallHandlers = (io, socket) => {
         ),
       ]);
 
+      // Notify caller of the server-issued callId (used for ICE validation)
+      socket.emit("call:ringing", {
+        callId,
+        targetUserId,
+      });
+
       // Emit incoming call event to target user's socket room
       io.to(`user:${targetUserId}`).emit("call:incoming", {
         callId,

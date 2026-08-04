@@ -2,6 +2,12 @@ export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/ap
 export const WS_URL = import.meta.env.VITE_WS_URL || 'http://localhost:5000';
 export const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || '';
 
+// Optional TURN server for reliable WebRTC media on restrictive NATs.
+// Leave empty to fall back to STUN-only ICE gathering.
+export const TURN_URL = import.meta.env.VITE_TURN_URL || '';
+export const TURN_USERNAME = import.meta.env.VITE_TURN_USERNAME || '';
+export const TURN_PASSWORD = import.meta.env.VITE_TURN_PASSWORD || '';
+
 export const PAGINATION = {
   CONVERSATIONS_LIMIT: 15,
   MESSAGES_LIMIT: 50,

@@ -16,6 +16,11 @@ export interface IncomingCallPayload {
   offer: RTCSessionDescriptionInit;
 }
 
+export interface CallRingingPayload {
+  callId: string;
+  targetUserId: string;
+}
+
 export interface CallAcceptedPayload {
   callId: string;
   answer: RTCSessionDescriptionInit;
