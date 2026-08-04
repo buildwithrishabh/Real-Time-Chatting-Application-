@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { Mic, MicOff, Video, VideoOff, PhoneOff, AlertCircle, ShieldCheck } from 'lucide-react';
 import { useCallStore } from '../../store/call.store';
 import { useWebRTC } from '../../hooks/useWebRTC';
@@ -34,20 +34,42 @@ export const ActiveCallModal: React.FC = () => {
 
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
+  const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Attach local stream
-  useEffect(() => {
-    if (localVideoRef.current && localStream) {
-      localVideoRef.current.srcObject = localStream;
-    }
-  }, [localStream]);
+  // Callback refs attach the stream the moment the element mounts, so the
+  // media is bound regardless of when srcObject vs. the element appears.
+  const attachLocalVideo = useCallback(
+    (el: HTMLVideoElement | null) => {
+      localVideoRef.current = el;
+      if (el && localStream) {
+        el.srcObject = localStream;
+        el.play().catch(() => {});
+      }
+    },
+    [localStream]
+  );
 
-  // Attach remote stream
-  useEffect(() => {
-    if (remoteVideoRef.current && remoteStream) {
-      remoteVideoRef.current.srcObject = remoteStream;
-    }
-  }, [remoteStream]);
+  const attachRemoteVideo = useCallback(
+    (el: HTMLVideoElement | null) => {
+      remoteVideoRef.current = el;
+      if (el && remoteStream) {
+        el.srcObject = remoteStream;
+        el.play().catch(() => {});
+      }
+    },
+    [remoteStream]
+  );
+
+  const attachRemoteAudio = useCallback(
+    (el: HTMLAudioElement | null) => {
+      remoteAudioRef.current = el;
+      if (el && remoteStream) {
+        el.srcObject = remoteStream;
+        el.play().catch(() => {});
+      }
+    },
+    [remoteStream]
+  );
 
   if (callStatus !== 'outgoing' && callStatus !== 'connected') return null;
   if (!peer) return null;
@@ -163,22 +185,25 @@ export const ActiveCallModal: React.FC = () => {
         <div className="relative flex-1 min-h-0 flex items-center justify-center bg-[#050505] chat-workspace-bg overflow-hidden">
           {isVideoConnected ? (
             <>
-              {/* Remote Video Stream */}
+              {/* Remote Video Stream — kept mounted so audio keeps playing
+                  even when the peer's camera is turned off. */}
               <div className="absolute inset-0 flex items-center justify-center">
-                {remoteIsVideoOff ? (
-                  <div className="flex flex-col items-center gap-4 text-zinc-500">
+                <video
+                  ref={attachRemoteVideo}
+                  autoPlay
+                  playsInline
+                  className={cn(
+                    'w-full h-full object-cover transition-opacity',
+                    remoteIsVideoOff && 'opacity-0'
+                  )}
+                />
+                {remoteIsVideoOff && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-zinc-500 pointer-events-none">
                     <div className="w-24 h-24 rounded-full bg-[#111114] border-2 border-white/10 flex items-center justify-center text-2xl font-bold text-zinc-300 shadow-inner">
                       {peer.username?.slice(0, 2).toUpperCase()}
                     </div>
                     <p className="text-sm font-medium">Camera turned off by {peer.displayName || peer.username}</p>
                   </div>
-                ) : (
-                  <video
-                    ref={remoteVideoRef}
-                    autoPlay
-                    playsInline
-                    className="w-full h-full object-cover"
-                  />
                 )}
               </div>
 
@@ -191,7 +216,7 @@ export const ActiveCallModal: React.FC = () => {
                   </div>
                 ) : (
                   <video
-                    ref={localVideoRef}
+                    ref={attachLocalVideo}
                     autoPlay
                     playsInline
                     muted
@@ -201,37 +226,43 @@ export const ActiveCallModal: React.FC = () => {
               </div>
             </>
           ) : (
-            /* Audio Call Display or Outgoing Ringing View */
-            <div className="relative flex flex-col items-center justify-center gap-6 px-4">
-              {isRinging && (
-                <div className="absolute -inset-4 rounded-full bg-[#5D5FEF]/15 animate-ping opacity-75 pointer-events-none" />
-              )}
-              <div className="relative">
-                <div className="p-1 rounded-full bg-gradient-to-tr from-[#5D5FEF] to-[#3B82F6] shadow-2xl shadow-[#5D5FEF]/30">
-                  <div className="w-28 h-28 md:w-36 md:h-36 rounded-full border-2 border-[#09090B] bg-[#111114] overflow-hidden flex items-center justify-center text-4xl font-bold text-zinc-200">
-                    {peer.avatarUrl ? (
-                      <img src={peer.avatarUrl} alt={peer.username} className="w-full h-full object-cover" />
-                    ) : (
-                      <span>{peer.username?.slice(0, 2).toUpperCase()}</span>
-                    )}
+            <>
+              {/* Remote audio element: audio calls have no video surface, so we
+                  need a dedicated element for the incoming audio to play. */}
+              <audio ref={attachRemoteAudio} autoPlay playsInline className="hidden" />
+
+              {/* Audio Call Display or Outgoing Ringing View */}
+              <div className="relative flex flex-col items-center justify-center gap-6 px-4">
+                {isRinging && (
+                  <div className="absolute -inset-4 rounded-full bg-[#5D5FEF]/15 animate-ping opacity-75 pointer-events-none" />
+                )}
+                <div className="relative">
+                  <div className="p-1 rounded-full bg-gradient-to-tr from-[#5D5FEF] to-[#3B82F6] shadow-2xl shadow-[#5D5FEF]/30">
+                    <div className="w-28 h-28 md:w-36 md:h-36 rounded-full border-2 border-[#09090B] bg-[#111114] overflow-hidden flex items-center justify-center text-4xl font-bold text-zinc-200">
+                      {peer.avatarUrl ? (
+                        <img src={peer.avatarUrl} alt={peer.username} className="w-full h-full object-cover" />
+                      ) : (
+                        <span>{peer.username?.slice(0, 2).toUpperCase()}</span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="text-center space-y-1">
-                <h3 className="text-xl md:text-2xl font-bold text-white tracking-tight">
-                  {peer.displayName || peer.username}
-                </h3>
-                <p
-                  className={cn(
-                    'text-sm font-semibold flex items-center justify-center gap-1.5',
-                    isRinging ? 'text-amber-400' : 'text-emerald-400'
-                  )}
-                >
-                  {statusText}
-                </p>
+                <div className="text-center space-y-1">
+                  <h3 className="text-xl md:text-2xl font-bold text-white tracking-tight">
+                    {peer.displayName || peer.username}
+                  </h3>
+                  <p
+                    className={cn(
+                      'text-sm font-semibold flex items-center justify-center gap-1.5',
+                      isRinging ? 'text-amber-400' : 'text-emerald-400'
+                    )}
+                  >
+                    {statusText}
+                  </p>
+                </div>
               </div>
-            </div>
+            </>
           )}
         </div>
 

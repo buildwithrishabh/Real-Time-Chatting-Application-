@@ -130,13 +130,13 @@ class WebRTCManager {
       this.pcRef.close();
       this.pcRef = null;
     }
-    this.receivedIceQueue = [];
-    this.outgoingIceQueue = [];
   }
 
   private fullCleanup() {
     this.ringtone.stop();
     this.closePeerConnection();
+    this.receivedIceQueue = [];
+    this.outgoingIceQueue = [];
     useCallStore.getState().resetCallState();
     this.invalidateCallHistory?.();
   }
@@ -157,9 +157,20 @@ class WebRTCManager {
     };
 
     pc.ontrack = (event) => {
-      event.streams[0]?.getTracks().forEach((track) => {
-        remoteMediaStream.addTrack(track);
-      });
+      if (event.streams && event.streams[0]) {
+        event.streams[0].getTracks().forEach((track) => {
+          remoteMediaStream.addTrack(track);
+        });
+      } else {
+        remoteMediaStream.addTrack(event.track);
+      }
+    };
+
+    pc.onconnectionstatechange = () => {
+      console.log(`[WebRTC] Connection state: ${pc.connectionState}`);
+      if (pc.connectionState === 'failed') {
+        useCallStore.getState().setErrorMessage('Unable to establish media connection.');
+      }
     };
 
     return pc;
