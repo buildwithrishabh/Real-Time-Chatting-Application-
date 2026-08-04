@@ -36,6 +36,7 @@
   - [✉️ Messages (`/api/v1/messages`)](#-messages-apiv1messages)
   - [🔔 Notifications (`/api/v1/notifications`)](#-notifications-apiv1notifications)
   - [📁 Files & Uploads (`/api/v1/files`)](#-files--uploads-apiv1files)
+  - [📞 Calls & History (`/api/v1/calls`)](#-calls--history-apiv1calls)
 - [⚡ Socket.io Events Reference](#-socketio-events-reference)
 - [🗄️ Database Models](#️-database-models)
 - [🚀 Quick Start Guide](#-quick-start-guide)
@@ -58,6 +59,8 @@ Whether you're sending direct 1-on-1 messages, managing group conversations with
 | Category | Feature | Description |
 | :--- | :--- | :--- |
 | ⚡ **Real-Time Engine** | **Sub-Second Messaging** | Real-time message dispatching & delivery powered by Socket.io, synchronized across multiple backend instances via Redis Pub/Sub. |
+| 📞 **WebRTC Calling** | **1-on-1 Audio & Video Calls** | Peer-to-Peer real-time audio & video calls with WebRTC signaling, ringtone audio alerts, active call controls (mute, camera toggle, screen sharing). |
+| 📋 **Call History** | **Persistent Call Logging** | Complete call history tracking with duration calculation, missed call detection, filtering, and quick redial options. |
 | 🟢 **Presence & Receipts** | **Live Presence & Typing** | Heartbeat-based online/offline status detection, dynamic live typing indicators, and message delivery/read status receipts (`delivered`, `read`). |
 | 👥 **Conversations** | **Direct & Group Chats** | Instant 1-on-1 private messaging and feature-complete group chats with member management and admin controls. |
 | 🔔 **Notifications** | **In-App Notification Center** | Real-time push notifications for incoming messages, group invitations, and system updates, with unread counters, batch read, and clear-all capabilities. |
@@ -65,6 +68,7 @@ Whether you're sending direct 1-on-1 messages, managing group conversations with
 | 🔐 **Authentication** | **Enterprise Auth & Security** | JWT Access & Refresh token rotation, HTTP-only secure cookie sessions, device tracking, password visibility toggles, dark-themed verification & password reset flows. |
 | 🚫 **Privacy & Control** | **User Blocking & Settings** | Granular user blocking/unblocking, configurable last-seen visibility, online presence privacy controls, and custom profiles. |
 | 🎨 **Modern Frontend UI** | **Sleek React 19 Interface** | Built with Vite, React 19, TypeScript, Tailwind CSS v4, dark glassmorphism design system (`#050505`/`#09090B`), Lucide icons, virtualized message rendering, and toast alerts with Sonner. |
+
 
 ---
 
@@ -235,6 +239,12 @@ All REST API endpoints are namespaced under `/api/v1`.
 | `POST` | `/verify` | Save uploaded file metadata to database | ✅ |
 | `POST` | `/webhook/scan` | Cloudinary asynchronous scan notification webhook | ❌ |
 
+### 📞 Calls & History (`/api/v1/calls`)
+
+| Method | Endpoint | Description | Auth Required |
+| :--- | :--- | :--- | :---: |
+| `GET` | `/history` | Fetch paginated audio & video call log history | ✅ |
+
 ---
 
 ## ⚡ Socket.io Events Reference
@@ -262,6 +272,13 @@ const socket = io("http://localhost:5000", {
 | **Typing** | `typing_stop` | Client ➔ Server | Clears typing indicator for participants |
 | **Receipts** | `message_delivered`| Server ➔ Client | Confirms message successfully delivered to recipient |
 | **Receipts** | `message_read` | Server ➔ Client | Notifies sender that recipient has read the message |
+| **WebRTC Calls** | `call:initiate` | Client ➔ Server | Initiates an audio or video call to target recipient |
+| **WebRTC Calls** | `call:incoming` | Server ➔ Client | Alerts recipient of an incoming audio/video call |
+| **WebRTC Calls** | `call:accept` | Client ➔ Server | Recipient accepts incoming call request |
+| **WebRTC Calls** | `call:reject` | Client ➔ Server | Recipient rejects incoming call request |
+| **WebRTC Calls** | `call:signal` | Bi-directional | Exchanged WebRTC SDP offers/answers & ICE candidates |
+| **WebRTC Calls** | `call:end` | Client ➔ Server | Terminates active call & calculates call duration |
+| **WebRTC Calls** | `call:ended` | Server ➔ Client | Notifies peer that call session has ended |
 
 ---
 
@@ -273,6 +290,7 @@ The application utilizes optimized MongoDB Mongoose schemas:
 - **`Conversation`**: Manages chat metadata (Direct or Group), title, avatar, last message reference, and timestamp.
 - **`Participant`**: Maps users to conversations with custom roles (`admin`, `member`), unread notification counts, and status.
 - **`Message`**: Stores text content, attachments array, sender ID, conversation ID, status (`sent`, `delivered`, `read`), and emoji reactions.
+- **`Call`**: Stores call log history (caller ID, receiver ID, call type `audio`/`video`, status `completed`/`missed`/`rejected`, duration, and timestamps).
 - **`Session`**: Tracks active login sessions, refresh tokens, device IP, user-agent, and expiration details.
 - **`Notification`**: Stores system alerts, message previews, unread badges, and user targets.
 - **`File`**: Keeps metadata for Cloudinary media uploads (public ID, file URL, type, size, owner).
