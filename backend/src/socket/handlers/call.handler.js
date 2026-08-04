@@ -2,6 +2,7 @@ const crypto = require("crypto");
 const logger = require("../../config/logger");
 const { redis } = require("../../redis/client");
 const Call = require("../../model/call");
+const User = require("../../model/User");
 
 /**
  * Redis Key Helpers & Expiry Constants
@@ -153,12 +154,20 @@ const registerCallHandlers = (io, socket) => {
         targetUserId,
       });
 
+      // Fetch caller profile so the receiver sees display name & avatar
+      const callerProfile = await User.findById(currentUserId)
+        .select("username displayName avatarUrl")
+        .lean()
+        .catch(() => null);
+
       // Emit incoming call event to target user's socket room
       io.to(`user:${targetUserId}`).emit("call:incoming", {
         callId,
         caller: {
           id: socket.user.id,
-          username: socket.user.username,
+          username: callerProfile?.username || socket.user.username,
+          displayName: callerProfile?.displayName || "",
+          avatarUrl: callerProfile?.avatarUrl || "",
         },
         callType,
         offer,

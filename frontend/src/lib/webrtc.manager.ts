@@ -193,7 +193,7 @@ class WebRTCManager {
   // Public actions (consumed by UI components)
   // ==========================================
 
-  async initiateCall(targetPeer: CallPeer, type: CallType) {
+  initiateCall = async (targetPeer: CallPeer, type: CallType) => {
     const socket = getSocket();
     if (!socket) {
       useCallStore.getState().setErrorMessage('Socket not connected.');
@@ -229,7 +229,7 @@ class WebRTCManager {
     }
   }
 
-  async acceptCall() {
+  acceptCall = async () => {
     this.ringtone.stop();
     const socket = getSocket();
     const { peer, incomingOffer, callId, callType } = useCallStore.getState();
@@ -277,7 +277,7 @@ class WebRTCManager {
     }
   }
 
-  rejectCall(reason = 'Call declined') {
+  rejectCall = (reason = 'Call declined') => {
     const socket = getSocket();
     const { callId, peer } = useCallStore.getState();
 
@@ -291,7 +291,7 @@ class WebRTCManager {
     this.fullCleanup();
   }
 
-  endCall() {
+  endCall = () => {
     const socket = getSocket();
     const { callId, peer } = useCallStore.getState();
 
@@ -304,7 +304,7 @@ class WebRTCManager {
     this.fullCleanup();
   }
 
-  toggleMute() {
+  toggleMute = () => {
     const { localStream, peer, isMuted } = useCallStore.getState();
 
     if (!localStream) return;
@@ -325,7 +325,7 @@ class WebRTCManager {
     }
   }
 
-  toggleVideo() {
+  toggleVideo = () => {
     const { localStream, peer, isVideoOff } = useCallStore.getState();
 
     if (!localStream) return;
@@ -350,7 +350,7 @@ class WebRTCManager {
   // Socket event handlers (server -> client)
   // ==========================================
 
-  handleCallRinging(payload: CallRingingPayload) {
+  handleCallRinging = (payload: CallRingingPayload) => {
     useCallStore.getState().setCallId(payload.callId);
     const peer = useCallStore.getState().peer;
     if (peer) {
@@ -358,7 +358,7 @@ class WebRTCManager {
     }
   }
 
-  handleIncomingCall(payload: IncomingCallPayload) {
+  handleIncomingCall = (payload: IncomingCallPayload) => {
     const socket = getSocket();
     const { callStatus } = useCallStore.getState();
 
@@ -381,7 +381,7 @@ class WebRTCManager {
     );
   }
 
-  async handleCallAccepted(payload: CallAcceptedPayload) {
+  handleCallAccepted = async (payload: CallAcceptedPayload) => {
     this.ringtone.stop();
     useCallStore.getState().setCallConnected(payload.callId);
 
@@ -405,7 +405,7 @@ class WebRTCManager {
     }
   }
 
-  handleCallRejected(payload: CallRejectedPayload) {
+  handleCallRejected = (payload: CallRejectedPayload) => {
     this.ringtone.stop();
     useCallStore.getState().setErrorMessage(payload.reason || 'Call rejected');
     setTimeout(() => {
@@ -413,7 +413,7 @@ class WebRTCManager {
     }, 2000);
   }
 
-  handleIceCandidate(payload: IceCandidatePayload) {
+  handleIceCandidate = (payload: IceCandidatePayload) => {
     if (this.pcRef && this.pcRef.remoteDescription) {
       try {
         void this.pcRef.addIceCandidate(new RTCIceCandidate(payload.candidate));
@@ -425,11 +425,11 @@ class WebRTCManager {
     }
   }
 
-  handleToggleMedia(payload: ToggleMediaPayload) {
+  handleToggleMedia = (payload: ToggleMediaPayload) => {
     useCallStore.getState().setRemoteMediaState(payload.mediaType, payload.enabled);
   }
 
-  handleCallEnded(payload: CallEndedPayload) {
+  handleCallEnded = (payload: CallEndedPayload) => {
     this.ringtone.stop();
     if (payload.reason) {
       useCallStore.getState().setErrorMessage(payload.reason);
@@ -441,7 +441,7 @@ class WebRTCManager {
     }
   }
 
-  handleCallBusy(payload: { reason?: string }) {
+  handleCallBusy = (payload: { reason?: string }) => {
     this.ringtone.stop();
     useCallStore.getState().setErrorMessage(payload.reason || 'User is currently busy');
     setTimeout(() => {
@@ -449,7 +449,7 @@ class WebRTCManager {
     }, 2000);
   }
 
-  handleCallError(payload: { message?: string }) {
+  handleCallError = (payload: { message?: string }) => {
     this.ringtone.stop();
     useCallStore.getState().setErrorMessage(payload.message || 'Call failed');
     setTimeout(() => {
@@ -457,7 +457,7 @@ class WebRTCManager {
     }, 2000);
   }
 
-  handleSocketDisconnect() {
+  handleSocketDisconnect = () => {
     // Backend cleans up active calls on its side; mirror cleanup locally.
     this.ringtone.stop();
     const { callStatus } = useCallStore.getState();

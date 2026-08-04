@@ -1,7 +1,8 @@
 import React, { useEffect, useRef } from 'react';
-import { Mic, MicOff, Video, VideoOff, PhoneOff, AlertCircle } from 'lucide-react';
+import { Mic, MicOff, Video, VideoOff, PhoneOff, AlertCircle, ShieldCheck } from 'lucide-react';
 import { useCallStore } from '../../store/call.store';
 import { useWebRTC } from '../../hooks/useWebRTC';
+import { cn } from '../../lib/utils';
 
 function formatDuration(seconds: number): string {
   const mins = Math.floor(seconds / 60);
@@ -51,46 +52,122 @@ export const ActiveCallModal: React.FC = () => {
   if (callStatus !== 'outgoing' && callStatus !== 'connected') return null;
   if (!peer) return null;
 
+  const isRinging = callStatus === 'outgoing';
+  const isVideoCall = callType === 'video';
+  const isVideoConnected = isVideoCall && callStatus === 'connected';
+  const statusText = isRinging
+    ? 'Ringing...'
+    : `${isVideoCall ? 'Video' : 'Audio'} call active`;
+
+  const ControlButton = ({
+    label,
+    title,
+    disabled = false,
+    active,
+    activeClass,
+    onClick,
+    children,
+  }: {
+    label: string;
+    title: string;
+    disabled?: boolean;
+    active: boolean;
+    activeClass: string;
+    onClick: () => void;
+    children: React.ReactNode;
+  }) => (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      className="flex flex-col items-center gap-2 group transition-transform active:scale-95 disabled:cursor-not-allowed"
+    >
+      <div
+        className={cn(
+          'w-12 h-12 rounded-full flex items-center justify-center transition-all',
+          disabled
+            ? 'bg-[#111114] text-zinc-600 border border-white/5'
+            : active
+              ? activeClass
+              : 'bg-[#18181C] border border-white/10 text-zinc-300 group-hover:bg-white/10 group-hover:text-white shadow-sm'
+        )}
+      >
+        {children}
+      </div>
+      <span
+        className={cn(
+          'text-[11px] font-semibold',
+          disabled ? 'text-zinc-600' : active ? 'text-white' : 'text-zinc-400 group-hover:text-zinc-200'
+        )}
+      >
+        {label}
+      </span>
+    </button>
+  );
+
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/95 backdrop-blur-lg p-2 md:p-6 animate-in fade-in duration-300">
-      <div className="relative w-full max-w-4xl h-[85vh] rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl overflow-hidden flex flex-col justify-between">
-        
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-xl p-2 md:p-6 animate-fade-in">
+      <div className="relative w-full max-w-4xl h-[88vh] md:h-[85vh] rounded-3xl bg-[#09090B] border border-white/10 shadow-2xl overflow-hidden flex flex-col">
+        {/* Ambient Radial Background Glows matching the chat dashboard */}
+        <div className="absolute w-[420px] h-[420px] bg-violet-600/12 rounded-full blur-3xl -top-24 -left-24 pointer-events-none animate-pulse-slow" />
+        <div className="absolute w-[380px] h-[380px] bg-cyan-500/10 rounded-full blur-3xl -bottom-24 -right-24 pointer-events-none animate-pulse-slow" />
+
         {/* Error / Alert Banner */}
         {errorMessage && (
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-rose-500/90 text-white px-4 py-2 rounded-full shadow-lg text-sm font-medium animate-bounce">
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-rose-600/95 text-white px-4 py-2 rounded-full shadow-lg text-sm font-medium animate-fade-in">
             <AlertCircle className="w-4 h-4" />
             <span>{errorMessage}</span>
           </div>
         )}
 
-        {/* Top Bar (Peer info + Status + Duration) */}
-        <div className="absolute top-4 left-4 right-4 z-40 flex items-center justify-between pointer-events-none">
-          <div className="flex items-center gap-3 bg-slate-900/80 backdrop-blur-md border border-slate-700/50 px-4 py-2 rounded-full pointer-events-auto shadow-md">
-            <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-800 border border-slate-600 flex items-center justify-center text-xs font-bold text-slate-200">
-              {peer.avatarUrl ? (
-                <img src={peer.avatarUrl} alt={peer.username} className="w-full h-full object-cover" />
-              ) : (
-                <span>{peer.username?.slice(0, 2).toUpperCase()}</span>
-              )}
+        {/* Header */}
+        <div className="relative z-10 h-16 px-4 sm:px-6 border-b border-white/10 bg-[#09090B]/90 backdrop-blur-xl flex items-center justify-between flex-shrink-0 select-none">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="relative flex-shrink-0">
+              <div className="w-10 h-10 rounded-full overflow-hidden bg-[#111114] border border-white/10 flex items-center justify-center text-xs font-bold text-zinc-300 shadow-md">
+                {peer.avatarUrl ? (
+                  <img src={peer.avatarUrl} alt={peer.username} className="w-full h-full object-cover" />
+                ) : (
+                  <span>{peer.username?.slice(0, 2).toUpperCase()}</span>
+                )}
+              </div>
+              <span
+                className={cn(
+                  'absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[#09090B]',
+                  isRinging ? 'bg-amber-400 animate-pulse' : 'bg-emerald-500 shadow-sm shadow-emerald-500/60'
+                )}
+              />
             </div>
-            <div>
-              <h4 className="text-sm font-semibold text-white leading-none">{peer.displayName || peer.username}</h4>
-              <p className="text-[11px] text-emerald-400 font-medium leading-tight mt-0.5">
-                {callStatus === 'outgoing' ? 'Ringing...' : formatDuration(callDuration)}
+            <div className="min-w-0">
+              <h4 className="text-sm sm:text-base font-extrabold text-white leading-tight truncate">
+                {peer.displayName || peer.username}
+              </h4>
+              <p
+                className={cn(
+                  'text-[11px] sm:text-xs font-semibold leading-tight mt-0.5 truncate',
+                  isRinging ? 'text-amber-400' : 'text-emerald-400'
+                )}
+              >
+                {isRinging ? statusText : formatDuration(callDuration)}
               </p>
             </div>
+          </div>
+
+          <div className="hidden sm:flex items-center gap-1.5 text-[11px] font-semibold text-zinc-400 bg-white/5 border border-white/10 px-3 py-1.5 rounded-full flex-shrink-0">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#5D5FEF]" />
+            <span>End-to-end encrypted</span>
           </div>
         </div>
 
         {/* Main Display Container */}
-        <div className="relative w-full h-full flex items-center justify-center bg-slate-950 overflow-hidden">
-          {callType === 'video' && callStatus === 'connected' ? (
+        <div className="relative flex-1 min-h-0 flex items-center justify-center bg-[#050505] chat-workspace-bg overflow-hidden">
+          {isVideoConnected ? (
             <>
               {/* Remote Video Stream */}
-              <div className="relative w-full h-full flex items-center justify-center bg-slate-950">
+              <div className="absolute inset-0 flex items-center justify-center">
                 {remoteIsVideoOff ? (
-                  <div className="flex flex-col items-center gap-4 text-slate-400">
-                    <div className="w-24 h-24 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center text-2xl font-bold text-slate-200 shadow-inner">
+                  <div className="flex flex-col items-center gap-4 text-zinc-500">
+                    <div className="w-24 h-24 rounded-full bg-[#111114] border-2 border-white/10 flex items-center justify-center text-2xl font-bold text-zinc-300 shadow-inner">
                       {peer.username?.slice(0, 2).toUpperCase()}
                     </div>
                     <p className="text-sm font-medium">Camera turned off by {peer.displayName || peer.username}</p>
@@ -106,11 +183,11 @@ export const ActiveCallModal: React.FC = () => {
               </div>
 
               {/* Local Video Inset (PIP) */}
-              <div className="absolute bottom-20 right-4 z-30 w-36 h-48 md:w-48 md:h-64 rounded-2xl overflow-hidden border-2 border-slate-700/80 shadow-2xl bg-slate-900 flex items-center justify-center">
+              <div className="absolute bottom-4 right-4 z-30 w-32 h-44 md:w-44 md:h-60 rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-[#111114] flex items-center justify-center">
                 {isVideoOff ? (
-                  <div className="flex flex-col items-center gap-2 text-slate-400">
+                  <div className="flex flex-col items-center gap-2 text-zinc-500">
                     <VideoOff className="w-6 h-6" />
-                    <span className="text-[10px]">Camera Off</span>
+                    <span className="text-[10px] font-semibold">Camera Off</span>
                   </div>
                 ) : (
                   <video
@@ -125,24 +202,33 @@ export const ActiveCallModal: React.FC = () => {
             </>
           ) : (
             /* Audio Call Display or Outgoing Ringing View */
-            <div className="flex flex-col items-center justify-center gap-6">
+            <div className="relative flex flex-col items-center justify-center gap-6 px-4">
+              {isRinging && (
+                <div className="absolute -inset-4 rounded-full bg-[#5D5FEF]/15 animate-ping opacity-75 pointer-events-none" />
+              )}
               <div className="relative">
-                {callStatus === 'outgoing' && (
-                  <div className="absolute -inset-4 rounded-full bg-emerald-500/20 animate-ping opacity-75" />
-                )}
-                <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-slate-700 bg-slate-800 shadow-2xl overflow-hidden flex items-center justify-center text-4xl font-bold text-slate-200">
-                  {peer.avatarUrl ? (
-                    <img src={peer.avatarUrl} alt={peer.username} className="w-full h-full object-cover" />
-                  ) : (
-                    <span>{peer.username?.slice(0, 2).toUpperCase()}</span>
-                  )}
+                <div className="p-1 rounded-full bg-gradient-to-tr from-[#5D5FEF] to-[#3B82F6] shadow-2xl shadow-[#5D5FEF]/30">
+                  <div className="w-28 h-28 md:w-36 md:h-36 rounded-full border-2 border-[#09090B] bg-[#111114] overflow-hidden flex items-center justify-center text-4xl font-bold text-zinc-200">
+                    {peer.avatarUrl ? (
+                      <img src={peer.avatarUrl} alt={peer.username} className="w-full h-full object-cover" />
+                    ) : (
+                      <span>{peer.username?.slice(0, 2).toUpperCase()}</span>
+                    )}
+                  </div>
                 </div>
               </div>
 
               <div className="text-center space-y-1">
-                <h3 className="text-2xl font-bold text-white">{peer.displayName || peer.username}</h3>
-                <p className="text-sm font-medium text-emerald-400">
-                  {callStatus === 'outgoing' ? 'Calling...' : `${callType === 'video' ? 'Video' : 'Audio'} Call Active`}
+                <h3 className="text-xl md:text-2xl font-bold text-white tracking-tight">
+                  {peer.displayName || peer.username}
+                </h3>
+                <p
+                  className={cn(
+                    'text-sm font-semibold flex items-center justify-center gap-1.5',
+                    isRinging ? 'text-amber-400' : 'text-emerald-400'
+                  )}
+                >
+                  {statusText}
                 </p>
               </div>
             </div>
@@ -150,39 +236,46 @@ export const ActiveCallModal: React.FC = () => {
         </div>
 
         {/* Bottom Control Bar */}
-        <div className="relative z-40 w-full py-6 bg-slate-900/90 border-t border-slate-800/80 flex items-center justify-center gap-6">
-          {/* Toggle Mute */}
-          <button
-            onClick={toggleMute}
-            className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
-              isMuted ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/30' : 'bg-slate-800 hover:bg-slate-700 text-slate-200'
-            }`}
+        <div className="relative z-10 border-t border-white/10 bg-[#09090B]/90 backdrop-blur-xl py-4 sm:py-5 px-4 flex items-center justify-center gap-8 sm:gap-10 flex-shrink-0 select-none">
+          <ControlButton
+            label={isMuted ? 'Unmute' : 'Mute'}
             title={isMuted ? 'Unmute Mic' : 'Mute Mic'}
+            active={isMuted}
+            activeClass="bg-rose-600 text-white shadow-lg shadow-rose-600/30"
+            onClick={toggleMute}
           >
             {isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
-          </button>
+          </ControlButton>
 
-          {/* Toggle Video */}
-          <button
+          <ControlButton
+            label={isVideoOff ? 'Camera On' : 'Camera Off'}
+            title={
+              isVideoCall
+                ? isVideoOff
+                  ? 'Turn Camera On'
+                  : 'Turn Camera Off'
+                : 'Video not available on an audio call'
+            }
+            active={isVideoOff}
+            disabled={!isVideoCall}
+            activeClass="bg-rose-600 text-white shadow-lg shadow-rose-600/30"
             onClick={toggleVideo}
-            className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
-              isVideoOff ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/30' : 'bg-slate-800 hover:bg-slate-700 text-slate-200'
-            }`}
-            title={isVideoOff ? 'Turn Camera On' : 'Turn Camera Off'}
           >
             {isVideoOff ? <VideoOff className="w-5 h-5" /> : <Video className="w-5 h-5" />}
-          </button>
+          </ControlButton>
 
           {/* End Call Button */}
           <button
             onClick={endCall}
-            className="w-14 h-14 rounded-full bg-rose-600 hover:bg-rose-500 text-white flex items-center justify-center shadow-xl shadow-rose-600/40 transition-transform active:scale-95"
             title="End Call"
+            className="flex flex-col items-center gap-2 group transition-transform active:scale-95"
           >
-            <PhoneOff className="w-6 h-6" />
+            <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white flex items-center justify-center shadow-xl shadow-rose-600/40 transition-all group-hover:scale-105">
+              <PhoneOff className="w-6 h-6" />
+            </div>
+            <span className="text-[11px] font-semibold text-rose-400 group-hover:text-rose-300">End</span>
           </button>
         </div>
-
       </div>
     </div>
   );
