@@ -30,7 +30,7 @@ function buildRTCConfig(): RTCConfiguration {
     iceServers.push(turnServer);
   }
 
-  return { iceServers };
+  return { iceServers, iceCandidatePoolSize: 8 };
 }
 
 const RTC_CONFIG = buildRTCConfig();
@@ -45,6 +45,9 @@ class RingtonePlayer {
       this.ctx =
         new (window.AudioContext ||
           (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      // Resume in case the context was created outside a user gesture (e.g. the
+      // callee's ringtone triggered by a socket event) and is thus suspended.
+      void this.ctx.resume();
       const playBeep = () => {
         if (!this.ctx) return;
         const osc = this.ctx.createOscillator();
@@ -96,6 +99,12 @@ class WebRTCManager {
   /** Locally generated candidates waiting for the server-issued callId. */
   private outgoingIceQueue: RTCIceCandidateInit[] = [];
 
+  /** Pre-acquired local media for an incoming call, started while ringing. */
+  private pendingMedia: Promise<MediaStream | null> | null = null;
+
+  /** Guards acceptCall against double-invocation while media is connecting. */
+  private isAccepting = false;
+
   private timerRef: number | null = null;
   private ringtone = new RingtonePlayer();
   private invalidateCallHistory: (() => void) | null = null;
@@ -137,6 +146,19 @@ class WebRTCManager {
     this.closePeerConnection();
     this.receivedIceQueue = [];
     this.outgoingIceQueue = [];
+
+    const pending = this.pendingMedia;
+    this.pendingMedia = null;
+    this.isAccepting = false;
+    if (pending) {
+      void pending.then((stream) => {
+        if (stream && useCallStore.getState().callStatus === 'idle') {
+          stream.getTracks().forEach((track) => track.stop());
+          useCallStore.getState().setLocalStream(null);
+        }
+      });
+    }
+
     useCallStore.getState().resetCallState();
     this.invalidateCallHistory?.();
   }
@@ -168,7 +190,14 @@ class WebRTCManager {
 
     pc.onconnectionstatechange = () => {
       console.log(`[WebRTC] Connection state: ${pc.connectionState}`);
-      if (pc.connectionState === 'failed') {
+      if (pc.connectionState === 'connected') {
+        // Only flip to "connected" once media is actually established so the
+        // UI, ringtone stop and duration timer reflect real audio/video flow.
+        const callId = useCallStore.getState().callId;
+        if (callId) {
+          useCallStore.getState().setCallConnected(callId);
+        }
+      } else if (pc.connectionState === 'failed') {
         useCallStore.getState().setErrorMessage('Unable to establish media connection.');
       }
     };
@@ -211,6 +240,8 @@ class WebRTCManager {
       return;
     }
 
+    this.pendingMedia = null;
+
     try {
       useCallStore.getState().startOutgoingCall(targetPeer, type);
       this.ringtone.startRinging();
@@ -224,7 +255,7 @@ class WebRTCManager {
       const pc = this.createPeerConnection(targetPeer.id);
       stream.getTracks().forEach((track) => pc.addTrack(track, stream));
 
-      const offer = await pc.createOffer();
+      const offer = await pc.createOffer({ trickle: true } as RTCOfferOptions);
       await pc.setLocalDescription(offer);
 
       socket.emit(SOCKET_EVENTS.CALL_INITIATE, {
@@ -241,6 +272,8 @@ class WebRTCManager {
   }
 
   acceptCall = async () => {
+    if (this.isAccepting) return;
+    this.isAccepting = true;
     this.ringtone.stop();
     const socket = getSocket();
     const { peer, incomingOffer, callId, callType } = useCallStore.getState();
@@ -251,10 +284,14 @@ class WebRTCManager {
     }
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: callType === 'video',
-      });
+      let stream = await (this.pendingMedia ?? null);
+      this.pendingMedia = null;
+      if (!stream) {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+          video: callType === 'video',
+        });
+      }
       useCallStore.getState().setLocalStream(stream);
 
       const pc = this.createPeerConnection(peer.id);
@@ -266,11 +303,11 @@ class WebRTCManager {
       while (this.receivedIceQueue.length > 0) {
         const candidate = this.receivedIceQueue.shift();
         if (candidate) {
-          await pc.addIceCandidate(new RTCIceCandidate(candidate));
+          await pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(() => {});
         }
       }
 
-      const answer = await pc.createAnswer();
+      const answer = await pc.createAnswer({ trickle: true } as RTCAnswerOptions);
       await pc.setLocalDescription(answer);
 
       socket.emit(SOCKET_EVENTS.CALL_ACCEPT, {
@@ -278,8 +315,7 @@ class WebRTCManager {
         targetUserId: peer.id,
         answer,
       });
-
-      useCallStore.getState().setCallConnected(callId);
+      // "Connected" UI is gated on pc.onconnectionstatechange === 'connected'.
     } catch (err: unknown) {
       const error = err as Error;
       console.error('Failed to accept call:', error);
@@ -390,16 +426,24 @@ class WebRTCManager {
       payload.callType,
       payload.offer
     );
+
+    // Start media acquisition in parallel with ringing so accepting the call
+    // doesn't block the answer on camera/mic warm-up.
+    this.pendingMedia = navigator.mediaDevices
+      .getUserMedia({ audio: true, video: payload.callType === 'video' })
+      .then((stream) => {
+        useCallStore.getState().setLocalStream(stream);
+        return stream;
+      })
+      .catch((err: unknown) => {
+        const error = err as Error;
+        console.error('Failed to pre-acquire media for incoming call:', error);
+        return null;
+      });
   }
 
   handleCallAccepted = async (payload: CallAcceptedPayload) => {
     this.ringtone.stop();
-    useCallStore.getState().setCallConnected(payload.callId);
-
-    const peer = useCallStore.getState().peer;
-    if (peer) {
-      this.flushOutgoingIceCandidates(peer.id);
-    }
 
     if (this.pcRef) {
       try {
@@ -407,7 +451,7 @@ class WebRTCManager {
         while (this.receivedIceQueue.length > 0) {
           const candidate = this.receivedIceQueue.shift();
           if (candidate) {
-            await this.pcRef.addIceCandidate(new RTCIceCandidate(candidate));
+            await this.pcRef.addIceCandidate(new RTCIceCandidate(candidate)).catch(() => {});
           }
         }
       } catch (err) {
@@ -426,11 +470,11 @@ class WebRTCManager {
 
   handleIceCandidate = (payload: IceCandidatePayload) => {
     if (this.pcRef && this.pcRef.remoteDescription) {
-      try {
-        void this.pcRef.addIceCandidate(new RTCIceCandidate(payload.candidate));
-      } catch (err) {
-        console.error('Error adding ICE candidate:', err);
-      }
+      this.pcRef
+        .addIceCandidate(new RTCIceCandidate(payload.candidate))
+        .catch((err) => {
+          console.error('Error adding ICE candidate:', err);
+        });
     } else {
       this.receivedIceQueue.push(payload.candidate);
     }
