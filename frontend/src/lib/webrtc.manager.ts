@@ -99,9 +99,6 @@ class WebRTCManager {
   /** Locally generated candidates waiting for the server-issued callId. */
   private outgoingIceQueue: RTCIceCandidateInit[] = [];
 
-  /** Pre-acquired local media for an incoming call, started while ringing. */
-  private pendingMedia: Promise<MediaStream | null> | null = null;
-
   /** Guards acceptCall against double-invocation while media is connecting. */
   private isAccepting = false;
 
@@ -146,18 +143,7 @@ class WebRTCManager {
     this.closePeerConnection();
     this.receivedIceQueue = [];
     this.outgoingIceQueue = [];
-
-    const pending = this.pendingMedia;
-    this.pendingMedia = null;
     this.isAccepting = false;
-    if (pending) {
-      void pending.then((stream) => {
-        if (stream && useCallStore.getState().callStatus === 'idle') {
-          stream.getTracks().forEach((track) => track.stop());
-          useCallStore.getState().setLocalStream(null);
-        }
-      });
-    }
 
     useCallStore.getState().resetCallState();
     this.invalidateCallHistory?.();
@@ -240,8 +226,6 @@ class WebRTCManager {
       return;
     }
 
-    this.pendingMedia = null;
-
     try {
       useCallStore.getState().startOutgoingCall(targetPeer, type);
       this.ringtone.startRinging();
@@ -284,14 +268,14 @@ class WebRTCManager {
     }
 
     try {
-      let stream = await (this.pendingMedia ?? null);
-      this.pendingMedia = null;
-      if (!stream) {
-        stream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
-          video: callType === 'video',
-        });
-      }
+      // Media must be requested from inside this user gesture (the Accept
+      // button tap). On mobile browsers, calling getUserMedia earlier from the
+      // socket event (non-gesture) either hangs or gets its permission prompt
+      // queued, which used to block accepting the call entirely.
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: callType === 'video',
+      });
       useCallStore.getState().setLocalStream(stream);
 
       const pc = this.createPeerConnection(peer.id);
@@ -315,7 +299,10 @@ class WebRTCManager {
         targetUserId: peer.id,
         answer,
       });
-      // "Connected" UI is gated on pc.onconnectionstatechange === 'connected'.
+      // Flip to the active call screen immediately. Media starts flowing once
+      // ICE negotiates; gating the UI on connectionState left mobile calls
+      // stuck on the incoming screen while ICE was still connecting.
+      useCallStore.getState().setCallConnected(callId);
     } catch (err: unknown) {
       const error = err as Error;
       console.error('Failed to accept call:', error);
@@ -426,24 +413,20 @@ class WebRTCManager {
       payload.callType,
       payload.offer
     );
-
-    // Start media acquisition in parallel with ringing so accepting the call
-    // doesn't block the answer on camera/mic warm-up.
-    this.pendingMedia = navigator.mediaDevices
-      .getUserMedia({ audio: true, video: payload.callType === 'video' })
-      .then((stream) => {
-        useCallStore.getState().setLocalStream(stream);
-        return stream;
-      })
-      .catch((err: unknown) => {
-        const error = err as Error;
-        console.error('Failed to pre-acquire media for incoming call:', error);
-        return null;
-      });
+    // NOTE: media is intentionally NOT pre-acquired here. This handler runs
+    // from a socket event (not a user gesture); on mobile browsers an
+    // out-of-gesture getUserMedia hangs or queues its permission prompt, which
+    // would block acceptCall. Media is acquired inside acceptCall instead.
   }
 
   handleCallAccepted = async (payload: CallAcceptedPayload) => {
     this.ringtone.stop();
+    useCallStore.getState().setCallConnected(payload.callId);
+
+    const peer = useCallStore.getState().peer;
+    if (peer) {
+      this.flushOutgoingIceCandidates(peer.id);
+    }
 
     if (this.pcRef) {
       try {
