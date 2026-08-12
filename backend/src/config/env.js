@@ -18,7 +18,7 @@ const envSchema = z.object({
   TRUST_PROXY: z
     .string()
     .optional()
-    .default("1")
+    .default("true")
     .transform((val) => {
       if (val === "true") return true;
       if (val === "false") return false;

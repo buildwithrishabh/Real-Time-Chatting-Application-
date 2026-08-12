@@ -5,8 +5,8 @@ const logger = require("../config/logger");
 
 const apiRateLimiter = (limit = 100, windowSec = 60) => {
   return async (req, res, next) => {
-    // Skip rate limiting in development mode to prevent local testing blocks
-    if (process.env.NODE_ENV === "development") {
+    // Optional flag to disable rate limiting if needed
+    if (process.env.DISABLE_RATE_LIMIT === "true") {
       return next();
     }
 
@@ -38,8 +38,10 @@ const apiRateLimiter = (limit = 100, windowSec = 60) => {
       const result = await multi.exec();
       const requestCount = result[2][1];
 
+      logger.info(`[RateLimiter] Key: ${key} | Count: ${requestCount}/${limit}`);
+
       if (requestCount > limit) {
-        logger.warn(`Rate limit reached for key: ${key}`);
+        logger.warn(`Rate limit reached for key: ${key} (Count: ${requestCount}/${limit})`);
         return next(
           new AppError("Too many requests, please try again later.", 429),
         );
