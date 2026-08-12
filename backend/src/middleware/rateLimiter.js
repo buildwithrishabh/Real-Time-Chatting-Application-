@@ -41,6 +41,11 @@ const apiRateLimiter = (limit = 100, windowSec = 60) => {
       logger.info(`[RateLimiter] Key: ${key} | Count: ${requestCount}/${limit}`);
 
       if (requestCount > limit) {
+        // Roll back the rejected attempt so blocked retries do not continuously extend the sliding window
+        await redis.zrem(key, memberId).catch((err) => {
+          logger.error(`Failed to remove rate limit member: ${err.message}`);
+        });
+
         logger.warn(`Rate limit reached for key: ${key} (Count: ${requestCount}/${limit})`);
         return next(
           new AppError("Too many requests, please try again later.", 429),
