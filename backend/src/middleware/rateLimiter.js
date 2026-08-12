@@ -1,16 +1,16 @@
+const crypto = require("crypto");
 const { redis } = require("../redis/client");
 const { AppError } = require("../common/appError");
 const logger = require("../config/logger");
 
 const apiRateLimiter = (limit = 100, windowSec = 60) => {
   return async (req, res, next) => {
-    
     // Skip rate limiting in development mode to prevent local testing blocks
     if (process.env.NODE_ENV === "development") {
       return next();
     }
 
-    const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+    const ip = req.ip || req.socket.remoteAddress;
     const userId = req.user ? req.user.id : null;
 
     const identifier = userId ? `user:${userId}` : `ip:${ip}`;
@@ -18,6 +18,7 @@ const apiRateLimiter = (limit = 100, windowSec = 60) => {
 
     const now = Date.now();
     const windowStart = now - windowSec * 1000;
+    const memberId = `${now}-${crypto.randomUUID()}`;
 
     try {
       const multi = redis.multi();
@@ -25,8 +26,8 @@ const apiRateLimiter = (limit = 100, windowSec = 60) => {
       // Remove requests older than the sliding window start
       multi.zremrangebyscore(key, 0, windowStart);
 
-      // Add current request
-      multi.zadd(key, now, now.toString());
+      // Add current request with a unique member value to ensure accurate counting under concurrency
+      multi.zadd(key, now, memberId);
 
       // Count total requests within the current window
       multi.zcard(key);
@@ -51,6 +52,5 @@ const apiRateLimiter = (limit = 100, windowSec = 60) => {
     }
   };
 };
-
 
 module.exports = apiRateLimiter;

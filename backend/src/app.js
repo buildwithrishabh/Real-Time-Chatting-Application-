@@ -13,6 +13,8 @@ const apiRouter = require("./routes");
 
 const app = express();
 
+app.set("trust proxy", env.TRUST_PROXY);
+
 app.use(helmet());
 
 const allowedOrigins = [

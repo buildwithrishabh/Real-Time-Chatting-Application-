@@ -15,6 +15,17 @@ const envSchema = z.object({
 
   CORS_ORIGIN: z.string().default("http://localhost:3000"),
 
+  TRUST_PROXY: z
+    .string()
+    .optional()
+    .default("1")
+    .transform((val) => {
+      if (val === "true") return true;
+      if (val === "false") return false;
+      const num = Number(val);
+      return !isNaN(num) ? num : val;
+    }),
+
   MONGODB_URI: z.string().url("MONGODB_URI must be a valid connection URL"),
 
   REDIS_HOST: z.string().default("localhost"),
